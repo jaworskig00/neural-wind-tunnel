@@ -93,3 +93,40 @@ test.describe('viewport', () => {
     expect(shot.length).toBeGreaterThan(10_000)
   })
 })
+
+test.describe('polars', () => {
+  test('sweeps the incidence range and marks the operating point', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('button', { name: 'polars' }).click()
+
+    await expect(page.getByTestId('polar-chart')).toBeVisible()
+    // The sweep runs a few points per animation frame rather than blocking for all of them.
+    await expect(page.getByTestId('polar-status')).toContainText('swept across', {
+      timeout: 20_000,
+    })
+    await expect(page.getByRole('img', { name: 'Cl against α' })).toBeVisible()
+    await expect(page.getByRole('img', { name: 'Cl against Cd' })).toBeVisible()
+  })
+
+  test('re-sweeps when the section changes', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('button', { name: 'polars' }).click()
+    await expect(page.getByTestId('polar-status')).toContainText('swept across', {
+      timeout: 20_000,
+    })
+
+    await page.getByRole('button', { name: 'NACA 4412' }).click()
+    await expect(page.getByTestId('polar-status')).toContainText('swept across', {
+      timeout: 20_000,
+    })
+  })
+
+  test('switches back to the pressure plot', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('button', { name: 'polars' }).click()
+    await expect(page.getByTestId('polar-chart')).toBeVisible()
+    await page.getByRole('button', { name: 'pressure' }).click()
+    await expect(page.getByTestId('cp-chart')).toBeVisible()
+    await expect(page.getByTestId('polar-chart')).toHaveCount(0)
+  })
+})

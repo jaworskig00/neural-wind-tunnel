@@ -632,3 +632,28 @@ and `docs/perf.md` says so rather than implying the stages were profiled. Memory
 either, and that is stated too.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T7.2 and T7.3 Polars and shareable state
+
+**Done.** `src/state/urlState.ts` implements `docs/URL-STATE.md` in both directions, and
+`useUrlState` applies an incoming link on load and rewrites the hash as the design changes.
+`usePolarSweep` runs the surrogate across the trained range and `PolarChart` draws lift against
+incidence and the drag polar, with the current operating point marked on both.
+
+**Verified.** 92 unit tests and 23 end-to-end tests pass; budgets held at 88.1 kB entry and
+254.1 kB renderer. The URL codec is tested against the cases that matter when someone else's code
+generates the string: unknown keys ignored, an unreadable version refused rather than guessed at,
+incidence and weights clamped with the clamp reported, malformed weights falling back, and the deep
+link the sister project builds from a dataset row read correctly. End to end, a link opens the
+design it describes, the app writes one that reopens it, and four slider movements leave the history
+length unchanged.
+
+**Follow-ups.** The sweep is spread across animation frames rather than run in a worker. Forty-one
+predictions at 0.9 ms is about 37 ms, which is two dropped frames in the middle of a slider drag;
+chunking six per frame costs nothing and avoids a second bundle with a copy of the model in it. A
+new section cancels the sweep in flight rather than queueing behind it.
+
+The hash is written with `replaceState` after 250 ms of quiet. Writing on every change would fill
+the back button with every slider position.
+
+**Commit.** see `git log`

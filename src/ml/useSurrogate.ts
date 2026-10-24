@@ -17,6 +17,8 @@ import { toInput } from './types'
 export interface SurrogateState {
   readonly prediction: Prediction | null
   readonly backend: BackendName | null
+  /** The loaded backend, for callers that need to run their own batch -- the polar sweep does. */
+  readonly surrogate: Surrogate | null
   readonly error: string | null
   readonly loading: boolean
   /** Milliseconds for the most recent prediction, and the 95th percentile so far. */
@@ -45,6 +47,7 @@ export function useSurrogate(): SurrogateState {
   const [state, setState] = useState<SurrogateState>({
     prediction: null,
     backend: null,
+    surrogate: null,
     error: null,
     loading: true,
     lastMs: 0,
@@ -65,7 +68,12 @@ export function useSurrogate(): SurrogateState {
           return null
         }
         surrogate.current = backend
-        setState((previous) => ({ ...previous, backend: backend.name, loading: false }))
+        setState((previous) => ({
+          ...previous,
+          backend: backend.name,
+          surrogate: backend,
+          loading: false,
+        }))
         return backend
       })
       .catch((error: unknown) => {

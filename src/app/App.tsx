@@ -1,10 +1,13 @@
 import { Suspense, lazy, useCallback, useState } from 'react'
 
 import { CpChart } from '../charts/CpChart'
+import { PolarChart } from '../charts/PolarChart'
+import { usePolarSweep } from '../charts/usePolarSweep'
 import { useSolverOverlay } from '../charts/useSolverOverlay'
 import type { TierReport } from '../rom/capabilities'
 import { useSurrogate } from '../ml/useSurrogate'
 import { useAppStore } from '../state/store'
+import { useUrlState } from '../state/useUrlState'
 import { HonestyBanner } from './HonestyBanner'
 import { ParameterPanel } from './ParameterPanel'
 import { PressureLegend } from './PressureLegend'
@@ -55,8 +58,12 @@ function Coefficient({
 export function App() {
   const alphaDeg = useAppStore((state) => state.alphaDeg)
   const presetId = useAppStore((state) => state.presetId)
-  const { prediction, backend, error, loading, p95Ms } = useSurrogate()
+  const { prediction, backend, error, loading, p95Ms, surrogate } = useSurrogate()
+  const section = useAppStore((state) => state.section)
+  const [chart, setChart] = useState<'cp' | 'polar'>('cp')
+  const sweep = usePolarSweep(surrogate, section, chart === 'polar')
   const overlay = useSolverOverlay()
+  const { notices, dismissNotices } = useUrlState()
   const [flow, setFlow] = useState<{ name: string; particles: number; frameMs: number } | null>(
     null,
   )
@@ -103,6 +110,23 @@ export function App() {
 
       <HonestyBanner />
 
+      {notices.length > 0 && (
+        <div
+          className="flex items-start gap-3 border-b border-warn/40 bg-warn/10 px-4 py-1.5 text-[0.7rem] text-warn"
+          role="status"
+          data-testid="url-notices"
+        >
+          <span className="flex-1">{notices.join(' ')}</span>
+          <button
+            type="button"
+            onClick={dismissNotices}
+            className="shrink-0 underline decoration-dotted underline-offset-2"
+          >
+            dismiss
+          </button>
+        </div>
+      )}
+
       <div className="flex min-h-0 flex-1">
         <main className="relative min-w-0 flex-1">
           <Suspense fallback={<ViewportFallback />}>
@@ -116,9 +140,39 @@ export function App() {
           </div>
 
           <div className="absolute right-3 bottom-3 rounded border border-line bg-surface/90 p-2">
-            <CpChart cp={prediction?.cp ?? null} reference={exact?.cp ?? null} />
+            <div className="mb-1 flex gap-1 px-1">
+              {(['cp', 'polar'] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => {
+                    setChart(option)
+                  }}
+                  className={`rounded border px-2 py-0.5 text-[0.65rem] transition-colors ${
+                    chart === option
+                      ? 'border-accent bg-raised text-accent'
+                      : 'border-line bg-base text-muted hover:border-faint hover:text-text'
+                  }`}
+                >
+                  {option === 'cp' ? 'pressure' : 'polars'}
+                </button>
+              ))}
+            </div>
+
+            {chart === 'cp' ? (
+              <CpChart cp={prediction?.cp ?? null} reference={exact?.cp ?? null} />
+            ) : (
+              <PolarChart points={sweep.points} alphaDeg={alphaDeg} />
+            )}
+
             <p className="mt-1 px-1 text-[0.65rem] text-faint">
-              {exact ? (
+              {chart === 'polar' ? (
+                <span data-testid="polar-status">
+                  {sweep.complete
+                    ? `${sweep.points.length} points swept across the trained range`
+                    : `sweeping… ${sweep.points.length}`}
+                </span>
+              ) : exact ? (
                 <span data-testid="overlay-active">
                   grey: exact solver, Cl {exact.cl.toFixed(4)}
                   {exact.cd !== null && `, Cd ${exact.cd.toFixed(5)}`}

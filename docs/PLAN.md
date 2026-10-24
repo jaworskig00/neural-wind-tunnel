@@ -272,8 +272,8 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 ### M7 — Streamlines, polars, shareable state
 
 - [ ] **T7.1** Streamline seeding rakes plus RK2 integration from the reconstructed field; render as tapered lines; configurable density; integration terminates on the body and at the domain edge.
-- [ ] **T7.2** Alpha sweep running a batch of inferences off the main thread; D3 polars for Cl against alpha, Cl against Cd and Cm against alpha, with the current point highlighted.
-- [ ] **T7.3** URL state codec per `URL-STATE.md`, with a Playwright round-trip test: open a shared URL and the scene, charts and camera match.
+- [x] **T7.2** Alpha sweep running a batch of inferences off the main thread; D3 polars for Cl against alpha, Cl against Cd and Cm against alpha, with the current point highlighted.
+- [x] **T7.3** URL state codec per `URL-STATE.md`, with a Playwright round-trip test: open a shared URL and the scene, charts and camera match.
 - [ ] **T7.4** Accessibility and interaction pass: keyboard control of every slider, visible focus, `prefers-reduced-motion` honoured by pausing particles, labelled chart axes, contrast checked.
 - [ ] **T7.5** Tag `v0.8.0-m7`.
 
