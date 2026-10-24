@@ -227,6 +227,14 @@ def march_surface(
     resolved = (theta > 0.0) & (s > STAGNATION_GUARD_S)
     cf[resolved] = 2.0 * thwaites_shear(lam[resolved]) * nu / (ue[resolved] * theta[resolved])
 
+    # The station every return path reports from. Computed once, before the march branches: the
+    # fully-laminar path used to report from the branch end instead, where the inviscid edge
+    # velocity is collapsing into the rear stagnation point. On two sampled rows that gave an edge
+    # velocity of 26 663, which Squire-Young raises to the power 3.6 -- a drag of 2.2e9 published as
+    # a converged result. One cut-off, applied once. See ADR-020.
+    inside_cutoff = np.flatnonzero(x <= TRAILING_EDGE_CUTOFF_X)
+    cutoff = int(inside_cutoff[-1]) if inside_cutoff.size else count - 1
+
     separated = np.flatnonzero((lam <= LAMINAR_SEPARATION_LAMBDA) & (s > STAGNATION_GUARD_S))
     natural_transition = _michel_transition_index(s, theta, reynolds)
     laminar_separation_index = int(separated[0]) if separated.size else None
@@ -256,9 +264,9 @@ def march_surface(
             transition_x=1.0,
             separation_induced_transition=False,
             separation_x=float("nan"),
-            theta_te=float(theta[-1]),
-            shape_factor_te=float(shape_factor[-1]),
-            edge_velocity_te=float(ue[-1]),
+            theta_te=float(theta[cutoff]),
+            shape_factor_te=float(shape_factor[cutoff]),
+            edge_velocity_te=float(ue[cutoff]),
         )
 
     # --- Turbulent: Head --------------------------------------------------------------------
@@ -268,12 +276,10 @@ def march_surface(
     current_h = float(min(shape_factor[transition], 1.8))
     current_h1 = head_h1(current_h)
 
-    last = count - 1
-    beyond = np.flatnonzero(x[transition:] > TRAILING_EDGE_CUTOFF_X)
-    if beyond.size:
-        last = transition + int(beyond[0])
-    # Squire-Young needs theta, H and Ue at one consistent station; `last` is that station.
-    edge_velocity_at_cutoff = float(ue[last])
+    # Squire-Young needs theta, H and Ue at one consistent station, and it is the same station
+    # every other return path reports from.
+    last = max(transition, cutoff)
+    edge_velocity_at_cutoff = float(ue[cutoff])
 
     for i in range(transition, last):
         ds = float(s[i + 1] - s[i])

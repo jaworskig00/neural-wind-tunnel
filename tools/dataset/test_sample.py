@@ -123,3 +123,25 @@ class TestAlphas:
 
     def test_angles_are_reproducible_per_shape(self) -> None:
         np.testing.assert_array_equal(alphas_for_shape(5), alphas_for_shape(5))
+
+
+class TestPrefixStability:
+    """A shape id must mean one geometry regardless of how many shapes were requested."""
+
+    def test_a_smaller_request_is_a_prefix_of_a_larger_one(self) -> None:
+        few, _ = generate_shapes(40, seed=3)
+        many, _ = generate_shapes(300, seed=3)
+        for small, large in zip(few, many, strict=False):
+            assert small.shape_id == large.shape_id
+            np.testing.assert_array_equal(small.upper_weights, large.upper_weights)
+            np.testing.assert_array_equal(small.lower_weights, large.lower_weights)
+
+    def test_holds_across_a_block_boundary(self) -> None:
+        from tools.dataset.sample import SOBOL_BLOCK
+
+        # The draw is consumed in fixed blocks; crossing one must not reshuffle what came before.
+        assert SOBOL_BLOCK == 4096
+        few, _ = generate_shapes(8, seed=11)
+        many, _ = generate_shapes(120, seed=11)
+        np.testing.assert_array_equal(few[0].upper_weights, many[0].upper_weights)
+        np.testing.assert_array_equal(few[-1].upper_weights, many[7].upper_weights)

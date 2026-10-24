@@ -514,3 +514,17 @@ has a hole, which is to be fixed rather than accommodated by widening the bound.
 The schema is unchanged, so the version is not bumped. The moment is now integrated over 98 % of the
 chord rather than all of it, which is a documented approximation belonging with the others in
 `docs/solver-validation.md`.
+
+**Addendum, found by the assertion itself.** The first regeneration under this ADR failed its own
+new check: two converged rows still carried a drag of 2.2e9. The momentum-thickness bound and the
+trailing-edge cut-off had both been added inside the *turbulent* branch of the march, and these two
+rows took the fully-laminar return path, which reported from the branch end where the inviscid edge
+velocity is collapsing -- 26 663, raised to the power 3.6 by Squire-Young. The cut-off station is
+now computed once, before the march branches, and every return path reports from it. The assertion
+caught in forty minutes what three milestones of downstream work had not.
+
+A second defect surfaced while debugging it: `generate_shapes(4000)` and `generate_shapes(8400)`
+returned entirely different geometries under the same seed, because the Sobol block size was derived
+from the requested count. A shape id therefore meant nothing outside the run that produced it, which
+made the first attempt to reproduce the failing rows reproduce different rows instead. The block is
+now a fixed 4096, so a smaller request is a prefix of a larger one.

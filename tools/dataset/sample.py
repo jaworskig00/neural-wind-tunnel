@@ -47,6 +47,16 @@ ALPHA_BOUNDS = (-6.0, 10.0)
 THICKNESS_BOUNDS = (0.06, 0.20)
 LE_RADIUS_BOUNDS = (0.002, 0.05)
 
+#: Sobol draw size, fixed rather than scaled to the requested count.
+#:
+#: A Sobol sequence keeps its balance properties when consumed in powers-of-two blocks, so the draw
+#: has to be block-sized. Sizing the block from `count` made the sequence depend on how many shapes
+#: were asked for: `generate_shapes(4000)` and `generate_shapes(8400)` returned entirely different
+#: geometries under the same seed, so a shape id meant nothing outside the run that produced it --
+#: which is a trap when debugging a specific row. With the block fixed, a smaller request is a
+#: prefix of a larger one and an id identifies one geometry for good.
+SOBOL_BLOCK = 4096
+
 #: Angles of attack solved per accepted shape. Sharing a shape across several incidences cuts the
 #: geometry cost and gives the surrogate the incidence sweep it needs to learn a lift curve.
 ALPHAS_PER_SHAPE = 8
@@ -135,7 +145,7 @@ def generate_shapes(count: int, seed: int = 20261024) -> tuple[list[Shape], dict
     """
     accepted: list[Shape] = []
     rejected: dict[str, int] = {}
-    block = max(1024, 1 << int(np.ceil(np.log2(max(count, 1)))))
+    block = SOBOL_BLOCK
     drawn = 0
 
     while len(accepted) < count:
