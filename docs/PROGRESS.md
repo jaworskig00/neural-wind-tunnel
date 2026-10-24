@@ -436,3 +436,19 @@ acceptance criterion in `docs/PLAN.md` is rewritten to the measured truth, and `
 `spatial_error` so the breakdown is regenerated rather than typed once.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T2.5 Dataset published, milestone M2 closed
+
+**Done.** The `dataset-v1` Release carries `designs.parquet`, the 500-row sample CSV,
+`pod_modes.npz` and `pod_modes.bin`, `cp_stations.json`, `manifest.json` and the schema verbatim as
+its README. The notes lead with the filter every consumer needs — `solver_status == "ok"` — and with
+the solver's limits rather than burying them.
+
+**Verified.** `gh release view dataset-v1` lists all seven assets and a direct asset URL resolves,
+so the sister project can fetch by URL as the contract promises.
+
+**Follow-ups.** The schema's amendment window closes here: ADR-016 allowed editing version 1 in place
+only while no Release existed. From now on a breaking change bumps the version and leaves this asset
+in place.
+
+**Commit.** see `git log`

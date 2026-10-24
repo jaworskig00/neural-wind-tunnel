@@ -218,7 +218,7 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 - [x] **T2.2** `tools/dataset/run.py`: multiprocessing batch runner with per-row `solver_status`, resumable checkpoints, parquet writer; failures recorded, never imputed.
 - [x] **T2.3** `tools/dataset/pod.py`: POD via truncated SVD on the velocity fields; export mean field plus 32 modes to `.npz` and to the fp16 atlas layout the browser loads; report captured energy per mode count.
 - [x] **T2.4** Coverage report (`docs/dataset.md`), `data/sample/designs-sample.csv` with 2000 rows committed, `manifest.json` with bounds, counts, checksums, solver version and data licence.
-- [ ] **T2.5** Publish the `dataset-v1` GitHub Release with `designs.parquet`, `pod_modes.npz`, `pod_modes.bin`, `cp_stations.json`, `manifest.json`; tag `v0.3.0-m2`.
+- [x] **T2.5** Publish the `dataset-v1` GitHub Release with `designs.parquet`, `pod_modes.npz`, `pod_modes.bin`, `cp_stations.json`, `manifest.json`; tag `v0.3.0-m2`.
 
 **Acceptance.** At least 40 000 rows with `solver_status = ok`; the reduced-order basis reconstructs the field to within about 1 % of the freestream away from the section, with the near-surface error published alongside it (ADR-017 replaces the original "99 % of variance at 32 modes", which the full dataset does not meet and which raising the mode count does not usefully fix); the whole dataset regenerates with one command and a documented runtime.
 **Verify.** `gh release view dataset-v1` lists the assets; a CI check downloads the sample CSV and validates it against the schema.
