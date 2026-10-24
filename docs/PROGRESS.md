@@ -570,25 +570,25 @@ Particle positions were read back and confirmed to vary per texel and to advect.
 **Follow-ups.** Five real bugs, every one of which produced a plausible-looking frame rather than an
 error, and all five are now documented where they happened.
 
-*Particles seeded from cleared memory.* The update shader treated an alpha of zero as "needs a
+_Particles seeded from cleared memory._ The update shader treated an alpha of zero as "needs a
 starting position", and the renderer clears to an opaque colour, so the test never fired: a quarter
 of a million particles all started at the origin and advected as a single point. Seeding is now an
 explicit pass.
 
-*A hash that collapses.* The usual `fract(sin(dot(p, k)) * 43758.5453)` reaches 1e7, where float32
+_A hash that collapses._ The usual `fract(sin(dot(p, k)) * 43758.5453)` reaches 1e7, where float32
 resolves to about 2, so `fract` quantises and neighbouring texels hash identically. Replaced, and
 the replacement is fed integer texel coordinates rather than normalised ones -- the same hash
 returns near-identical values for inputs a five-hundredth apart.
 
-*A `uv` varying that arrived constant.* Every full-screen pass now derives its coordinate from
+_A `uv` varying that arrived constant._ Every full-screen pass now derives its coordinate from
 `gl_FragCoord` and an explicit resolution uniform, which the rasteriser cannot fail to supply.
 
-*React-three-fiber hands over the render loop* at any positive `useFrame` priority. The scene simply
+_React-three-fiber hands over the render loop_ at any positive `useFrame` priority. The scene simply
 stopped being drawn while the trail composite accumulated onto an uncleared buffer -- a uniformly
 white frame that survived every attempt to turn the trails down. The callback now renders the scene
 itself.
 
-*Two feedback loops*, where a texture bound for reading was also the render target. The driver
+_Two feedback loops_, where a texture bound for reading was also the render target. The driver
 refuses the draw and reports a warning; the frame goes black. Both the trail composite and the
 particle render material now release their texture before it becomes a target.
 
@@ -601,5 +601,34 @@ difference between invisible and white.
 Worth recording about method: the browser pane's screenshots of this WebGL canvas were repeatedly
 wrong -- showing a blank viewport while a pixel read of the same frame returned the rendered image.
 Several of the above were diagnosed only after switching to reading the framebuffer directly.
+
+**Commit.** see `git log`
+
+## 2026-10-24 — T6.5 and T6.6, milestone M6 closed
+
+**Done.** `src/gpgpu/frameProbe.ts` chooses a particle count from measured frame times rather than
+from what the hardware claims: a 50-frame window, the median so one long frame cannot force a
+downgrade, asymmetric thresholds with a gap between them so it cannot oscillate, and a hold after
+every change. Picking a tier by hand freezes it. The running tier and its frame time are reported in
+the status line. `docs/perf.md` carries the measurements and `tests/e2e/performance.spec.ts`
+reproduces them.
+
+**Verified.** 73 unit tests and 13 end-to-end tests pass, lint and typecheck clean.
+
+On an Apple M4 Pro through ANGLE Metal, every tier lands on exactly 8.3 ms — 120 frames per second —
+and raising the drawing buffer to 3200 by 2018 with a million particles changed nothing. The loop is
+bound by the display refresh, not the GPU, so the honest claim is not "a million particles at
+120 fps" but "the particle work is too small to measure against a 120 Hz vsync on this hardware".
+The budget of 60 fps at 500 000 particles is met at half the frame budget and double the count.
+
+On ANGLE's software renderer, which is what continuous integration runs, the tiers finally separate:
+65 536 particles hold 16.7 ms, 262 144 take 33.7 ms, and a million give a 34.2 ms median with a
+108.5 ms p95 — frames that occasionally take three times the median. That is the measurement that
+justifies the tiering existing at all.
+
+**Follow-ups.** The frame-time figures could not isolate the cost of individual passes; doing so
+needs `EXT_disjoint_timer_query_webgl2`, which is not worth the code for a number nobody acts on,
+and `docs/perf.md` says so rather than implying the stages were profiled. Memory is not profiled
+either, and that is stated too.
 
 **Commit.** see `git log`

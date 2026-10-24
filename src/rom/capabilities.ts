@@ -95,3 +95,12 @@ export function initialTier(capabilities: GpuCapabilities): Tier {
   if (!capabilities.colorBufferFloat || capabilities.maxTextureSize < 4096) return tierByName('mid')
   return tierByName('high')
 }
+
+/** What the flow field reports about the tier it is actually running. */
+export interface TierReport {
+  readonly tier: Tier
+  /** Median frame time behind the decision, or zero before the probe has measured anything. */
+  readonly medianFrameMs: number
+  /** False when the viewer chose the tier themselves. */
+  readonly automatic: boolean
+}

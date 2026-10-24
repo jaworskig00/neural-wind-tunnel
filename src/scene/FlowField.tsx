@@ -2,11 +2,18 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { BodyMask } from '../gpgpu/bodyMask'
+import { FrameProbe } from '../gpgpu/frameProbe'
 import { ParticleField } from '../gpgpu/particles'
 import { TrailBuffer } from '../gpgpu/trails'
 import type { Prediction } from '../ml/types'
 import { podAtlasUrl } from '../ml/sources'
-import { type GpuCapabilities, type Tier, initialTier, tierByName } from '../rom/capabilities'
+import {
+  type GpuCapabilities,
+  type Tier,
+  type TierReport,
+  initialTier,
+  tierByName,
+} from '../rom/capabilities'
 import { type PodAtlas, loadPodAtlas } from '../rom/podAtlas'
 import { FieldReconstruction } from '../rom/reconstruction'
 import { useAppStore } from '../state/store'
@@ -27,10 +34,11 @@ import { useAppStore } from '../state/store'
 export interface FlowFieldProps {
   readonly prediction: Prediction | null
   readonly capabilities: GpuCapabilities
-  readonly onReady?: (info: { tier: Tier; particles: number }) => void
+  /** Called whenever the running tier changes, so the UI can report what is actually being drawn. */
+  readonly onTier?: (report: TierReport) => void
 }
 
-export function FlowField({ prediction, capabilities, onReady }: FlowFieldProps) {
+export function FlowField({ prediction, capabilities, onTier }: FlowFieldProps) {
   const renderer = useThree((state) => state.gl)
   const section = useAppStore((state) => state.section)
   const alphaDeg = useAppStore((state) => state.alphaDeg)
@@ -40,10 +48,24 @@ export function FlowField({ prediction, capabilities, onReady }: FlowFieldProps)
   const tierChoice = useAppStore((state) => state.tier)
 
   const [atlas, setAtlas] = useState<PodAtlas | null>(null)
-  const tier = useMemo(
+  const startingTier = useMemo(
     () => (tierChoice === 'auto' ? initialTier(capabilities) : tierByName(tierChoice)),
     [capabilities, tierChoice],
   )
+  /**
+   * The tier actually running.
+   *
+   * Derived rather than mirrored: the probe's choice is held as an override of the starting guess,
+   * so changing the guess -- by picking a tier by hand, or by the capability check -- clears it
+   * without an effect that writes state during render.
+   */
+  const [override, setOverride] = useState<{ from: Tier; to: Tier } | null>(null)
+  const tier = override?.from === startingTier ? override.to : startingTier
+
+  // The probe is created inside the frame callback rather than during render: a ref may be written
+  // from a callback but not while rendering, and the first frame is the earliest it is needed.
+  const probe = useRef<FrameProbe | null>(null)
+  const probeKey = useRef<Tier | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -105,7 +127,7 @@ export function FlowField({ prediction, capabilities, onReady }: FlowFieldProps)
       trails,
     }
     stages.current = built
-    onReady?.({ tier, particles: particles.particleCount })
+    onTier?.({ tier, medianFrameMs: 0, automatic: tierChoice === 'auto' })
 
     return () => {
       stages.current = null
@@ -117,7 +139,7 @@ export function FlowField({ prediction, capabilities, onReady }: FlowFieldProps)
     // `size` is deliberately excluded: a resize is handled below, not by rebuilding every stage
     // and losing the simulation state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [atlas, capabilities.precision, tier, renderer, onReady])
+  }, [atlas, capabilities.precision, tier, renderer, onTier, tierChoice])
 
   // The field depends on the prediction; rebuilding it on anything else would be wasted work.
   useEffect(() => {
@@ -176,6 +198,19 @@ export function FlowField({ prediction, capabilities, onReady }: FlowFieldProps)
     current.particles.step(renderer, delta, current.field.texture, current.mask.texture)
     current.trails.accumulate(renderer, camera, delta)
     current.trails.draw(renderer)
+
+    if (probeKey.current !== startingTier) {
+      probeKey.current = startingTier
+      const created = new FrameProbe(startingTier.name)
+      if (tierChoice !== 'auto') created.freeze()
+      probe.current = created
+    }
+
+    const decision = probe.current?.record(delta)
+    if (decision?.changed) {
+      setOverride({ from: startingTier, to: decision.tier })
+      onTier?.({ tier: decision.tier, medianFrameMs: decision.medianFrameMs, automatic: true })
+    }
   }, 1)
 
   return null

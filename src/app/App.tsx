@@ -1,7 +1,8 @@
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useCallback, useState } from 'react'
 
 import { CpChart } from '../charts/CpChart'
 import { useSolverOverlay } from '../charts/useSolverOverlay'
+import type { TierReport } from '../rom/capabilities'
 import { useSurrogate } from '../ml/useSurrogate'
 import { useAppStore } from '../state/store'
 import { HonestyBanner } from './HonestyBanner'
@@ -56,6 +57,16 @@ export function App() {
   const presetId = useAppStore((state) => state.presetId)
   const { prediction, backend, error, loading, p95Ms } = useSurrogate()
   const overlay = useSolverOverlay()
+  const [flow, setFlow] = useState<{ name: string; particles: number; frameMs: number } | null>(
+    null,
+  )
+  const handleTier = useCallback((info: TierReport) => {
+    setFlow({
+      name: info.tier.name,
+      particles: info.tier.particles,
+      frameMs: info.medianFrameMs,
+    })
+  }, [])
   const exact = overlay.lookup(presetId, alphaDeg)
 
   return (
@@ -95,7 +106,7 @@ export function App() {
       <div className="flex min-h-0 flex-1">
         <main className="relative min-w-0 flex-1">
           <Suspense fallback={<ViewportFallback />}>
-            <Viewport prediction={prediction} />
+            <Viewport prediction={prediction} onTier={handleTier} />
           </Suspense>
 
           <div className="pointer-events-none absolute top-3 left-4 flex flex-col gap-2">
@@ -124,6 +135,15 @@ export function App() {
             {!loading && error === null && backend !== null && (
               <span data-testid="inference-status">
                 {backend} backend · {p95Ms.toFixed(1)} ms p95
+                {flow && (
+                  <>
+                    {' · '}
+                    <span data-testid="flow-status">
+                      {(flow.particles / 1000).toFixed(0)}k particles ({flow.name})
+                      {flow.frameMs > 0 && ` · ${flow.frameMs.toFixed(1)} ms/frame`}
+                    </span>
+                  </>
+                )}
               </span>
             )}
           </p>

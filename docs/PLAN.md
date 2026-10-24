@@ -263,8 +263,8 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 - [x] **T6.2** ROM reconstruction pass: one fragment shader that writes `u, v` into a float render target from the mean field plus the 32 predicted coefficients; runs only when the prediction changes.
 - [x] **T6.3** GPGPU particle system: position and age textures, ping-pong FBOs, RK2 advection sampling the reconstructed field, respawn at the inlet, airfoil SDF mask so nothing enters the body.
 - [x] **T6.4** Particle rendering: additive points sized by depth, coloured by local speed or by surface Cp proximity, trails via an accumulation target with per-frame decay.
-- [ ] **T6.5** Performance tiering: short FPS probe on start picks 1M, 500k or 150k particles; a no-float-render-target path degrades to a lower-precision field and fewer particles instead of failing; a manual override in the UI.
-- [ ] **T6.6** `docs/perf.md` with measured numbers on at least two GPUs, plus the probe logic explained; tag `v0.7.0-m6`.
+- [x] **T6.5** Performance tiering: short FPS probe on start picks 1M, 500k or 150k particles; a no-float-render-target path degrades to a lower-precision field and fewer particles instead of failing; a manual override in the UI.
+- [x] **T6.6** `docs/perf.md` with measured numbers on at least two GPUs, plus the probe logic explained; tag `v0.7.0-m6`.
 
 **Acceptance.** 60 fps with 500k particles at 1440x900 on Apple M1; no particles inside the body; the app still renders something correct on a machine without float render targets.
 **Verify.** Playwright measures frame times over a 5 s window and asserts the budget on CI hardware at the tier CI reports; screenshots and a short capture committed.

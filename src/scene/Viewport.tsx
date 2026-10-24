@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react'
 
 import { FlowField } from './FlowField'
 import type { Prediction } from '../ml/types'
-import { type GpuCapabilities, detectCapabilities } from '../rom/capabilities'
+import { type GpuCapabilities, type TierReport, detectCapabilities } from '../rom/capabilities'
 import { useAppStore } from '../state/store'
 import { buildAirfoilGeometry } from './airfoilGeometry'
 import { createPressureMaterial } from './pressureMaterial'
@@ -46,7 +46,12 @@ function AirfoilMesh({ prediction }: { readonly prediction: Prediction | null })
  * of what the solver does. It is the right choice for the camera: the flow visualisation in M6
  * reads from a field aligned with the world x axis, so the freestream must stay put.
  */
-export function Viewport({ prediction }: { readonly prediction: Prediction | null }) {
+export interface ViewportProps {
+  readonly prediction: Prediction | null
+  readonly onTier?: (report: TierReport) => void
+}
+
+export function Viewport({ prediction, onTier }: ViewportProps) {
   // Probed once, before the scene exists, so the flow field never has to discover mid-frame that
   // the hardware cannot do what it assumed.
   const capabilities = useMemo<GpuCapabilities>(() => detectCapabilities(), [])
@@ -70,7 +75,11 @@ export function Viewport({ prediction }: { readonly prediction: Prediction | nul
       <directionalLight position={[-2, -1, -2]} intensity={0.35} color="#8ab4f8" />
 
       <AirfoilMesh prediction={prediction} />
-      <FlowField prediction={prediction} capabilities={capabilities} />
+      <FlowField
+        prediction={prediction}
+        capabilities={capabilities}
+        {...(onTier ? { onTier } : {})}
+      />
 
       <Grid
         args={[8, 8]}
