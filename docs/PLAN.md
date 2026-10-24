@@ -293,11 +293,11 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 
 ### M9 — Polish and release
 
-- [ ] **T9.1** Dead code and bundle audit: remove unused modules, verify every budget in the table above, document any miss.
-- [ ] **T9.2** Capture the demo media with Playwright: hero GIF or short video, plus screenshots of the colormap, particles, streamlines, polars and the assistant.
-- [ ] **T9.3** Full README: hero media, live demo placeholder, what it is, how the ML works, how the shaders work, the honesty section with accuracy numbers, architecture diagram, local setup, how to regenerate the dataset and retrain, licence and credits.
-- [ ] **T9.4** Cross-link the sister project, finish `CHANGELOG.md`, make sure every checkbox in this plan is ticked and `QUESTIONS.md` lists what is genuinely open.
-- [ ] **T9.5** Tag `v1.0.0`.
+- [x] **T9.1** Dead code and bundle audit: remove unused modules, verify every budget in the table above, document any miss.
+- [x] **T9.2** Capture the demo media with Playwright: hero GIF or short video, plus screenshots of the colormap, particles, streamlines, polars and the assistant.
+- [x] **T9.3** Full README: hero media, live demo placeholder, what it is, how the ML works, how the shaders work, the honesty section with accuracy numbers, architecture diagram, local setup, how to regenerate the dataset and retrain, licence and credits.
+- [x] **T9.4** Cross-link the sister project, finish `CHANGELOG.md`, make sure every checkbox in this plan is ticked and `QUESTIONS.md` lists what is genuinely open.
+- [x] **T9.5** Tag `v1.0.0`.
 
 **Acceptance.** A reviewer who has never seen the project understands what it is, how it works and what it cannot do, in under five minutes of reading.
 **Verify.** CI green on the tagged commit; all media present; plan fully ticked.

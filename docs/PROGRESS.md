@@ -728,3 +728,33 @@ ADR-023 says so rather than pretending otherwise.
 candidate for its own chunk in the T9.1 audit.
 
 **Commit.** see `git log`
+
+## M9 — polish and release
+
+**The audit found one real bug.** Picking a particle tier by hand did nothing when the automatic
+probe had already climbed from that same tier: `override.from === startingTier` matched the
+explicit choice and put the probe's decision back. The button highlighted, the count did not
+change. The probe's decision now applies only while the tier is automatic. It surfaced while
+capturing media, which is the argument for capturing media from the real app.
+
+**Dead code.** Four exports nothing outside their own module used, now module-private. The rest of
+what a naive scan flags is prop and option interfaces, exported for readers rather than for
+importers; they stay.
+
+**Bundle.** The assistant is behind a lazy import, which took the entry bundle from 95.7 kB to
+88.7 kB gzipped and gave it a budget of its own. Nothing in the entry chunk reaches `src/llm`.
+
+**Media.** `tests/e2e/media.spec.ts`, skipped unless `CAPTURE_MEDIA=1`, drives the app by deep
+link and captures five screenshots and 48 hero frames; `scripts/make-hero.sh` assembles them. It
+runs headed and on Metal rather than SwiftShader, for two reasons that both took a wrong capture
+to learn: headless Chromium has no compositor driving `requestAnimationFrame`, so the particles
+take a handful of steps and the still shows them bunched at the inflow; and the software backend
+draws a tenth of the particles at a sixth of the frame rate, which is honest about the renderer
+and dishonest about the app. Trail exposure is turned well down for a still, because the
+accumulation buffer keeps building while nothing changes.
+
+**README.** Rewritten around the claim the project actually makes — the field is a reduced-order
+model, not noise — and the numbers that back it, including the solver's own error against
+published data, which stacks on top of the surrogate's.
+
+**Commit.** see `git log`

@@ -19,7 +19,7 @@ import { toInput } from '../ml/types'
 import { TRAINED_ALPHA_RANGE, type Section } from '../geometry/shapeOps'
 
 /** Points across the incidence range. Enough for a smooth curve, few enough to stay cheap. */
-export const SWEEP_POINTS = 41
+const SWEEP_POINTS = 41
 
 /** Predictions computed per animation frame. */
 const CHUNK = 6

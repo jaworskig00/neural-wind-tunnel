@@ -45,4 +45,18 @@ a departure from a purely static deployment. In the v2 backlog.
 
 ## Resolved
 
-_Nothing yet._
+### Q7 — Which inference backend should be the default
+
+**Resolved 2026-10-24 (ADR-021).** Both ship. The hand-written TypeScript forward pass is the
+default and ONNX Runtime Web is one query parameter away, because measurement reversed the
+original plan: thirteen inputs through three small layers is tens of microseconds of arithmetic,
+and the runtime costs 109 kB of WebAssembly to do the same work more slowly. A parity test holds
+the two together so neither can drift.
+
+### Q8 — How strict can the Content Security Policy be
+
+**Resolved 2026-10-24 (ADR-023).** `connect-src` allows HTTPS generally plus loopback, rather than
+an allowlist of provider origins. The assistant is bring-your-own-endpoint — a gateway on the
+visitor's own machine is a supported case — so there is no list to write. Everything else in the
+policy is as narrow as it can be: `default-src 'self'`, `object-src 'none'`, no frame ancestors,
+no form action.

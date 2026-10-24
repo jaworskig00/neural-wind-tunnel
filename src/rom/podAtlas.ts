@@ -38,7 +38,7 @@ export interface PodAtlas {
  * The file stores `u` and `v` as separate planes per layer; a two-channel texture wants them side
  * by side per texel. Done once at load, not per frame.
  */
-export function interleave(raw: Uint16Array): Uint16Array {
+function interleave(raw: Uint16Array): Uint16Array {
   if (raw.length !== LAYERS * FLOATS_PER_LAYER) {
     throw new Error(
       `Atlas has ${raw.length} half-floats, expected ${LAYERS * FLOATS_PER_LAYER} ` +

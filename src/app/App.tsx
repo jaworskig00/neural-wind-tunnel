@@ -5,11 +5,9 @@ import { PolarChart } from '../charts/PolarChart'
 import { usePolarSweep } from '../charts/usePolarSweep'
 import { useSolverOverlay } from '../charts/useSolverOverlay'
 import type { TierReport } from '../rom/capabilities'
-import { useAssistant } from '../llm/useAssistant'
 import { useSurrogate } from '../ml/useSurrogate'
 import { useAppStore } from '../state/store'
 import { useUrlState } from '../state/useUrlState'
-import { AssistantPanel } from './AssistantPanel'
 import { HonestyBanner } from './HonestyBanner'
 import { ParameterPanel } from './ParameterPanel'
 import { PressureLegend } from './PressureLegend'
@@ -23,6 +21,17 @@ import { PressureLegend } from './PressureLegend'
 const Viewport = lazy(async () => {
   const module = await import('../scene/Viewport')
   return { default: module.Viewport }
+})
+
+/**
+ * The assistant is a chunk of its own, loaded the first time it is opened.
+ *
+ * Two providers, four tool schemas and three recorded transcripts are a few kilobytes that most
+ * visits never need. Nothing in the entry bundle imports `src/llm` except through this.
+ */
+const Assistant = lazy(async () => {
+  const module = await import('./Assistant')
+  return { default: module.Assistant }
 })
 
 function ViewportFallback() {
@@ -76,8 +85,9 @@ export function App() {
       frameMs: info.medianFrameMs,
     })
   }, [])
-  const assistant = useAssistant(surrogate)
   const [assistantOpen, setAssistantOpen] = useState(false)
+  // Once opened it stays mounted, so closing the panel does not discard the conversation.
+  const [assistantLoaded, setAssistantLoaded] = useState(false)
   const exact = overlay.lookup(presetId, alphaDeg)
 
   return (
@@ -88,6 +98,7 @@ export function App() {
           <button
             type="button"
             onClick={() => {
+              setAssistantLoaded(true)
               setAssistantOpen((open) => !open)
             }}
             aria-expanded={assistantOpen}
@@ -223,13 +234,16 @@ export function App() {
             )}
           </p>
         </main>
-        {assistantOpen && (
-          <AssistantPanel
-            assistant={assistant}
-            onClose={() => {
-              setAssistantOpen(false)
-            }}
-          />
+        {assistantLoaded && (
+          <Suspense fallback={null}>
+            <Assistant
+              surrogate={surrogate}
+              hidden={!assistantOpen}
+              onClose={() => {
+                setAssistantOpen(false)
+              }}
+            />
+          </Suspense>
         )}
         <ParameterPanel />
       </div>

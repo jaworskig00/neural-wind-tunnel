@@ -4,15 +4,16 @@ Measured, not estimated. Every number here comes from a run described below and 
 
 ## Budgets
 
-| Budget                        | Limit       | Measured               |
-| ----------------------------- | ----------- | ---------------------- |
-| Entry JS bundle               | 100 kB gzip | 85.7 kB                |
-| Renderer chunk, lazily loaded | 300 kB gzip | 253.8 kB               |
-| Stylesheet                    | 12 kB gzip  | 3.7 kB                 |
-| Surrogate inference, p95      | 5 ms        | 0.9 ms                 |
-| Model artifact                | 1 MB        | 0.71 MB                |
-| Mode atlas                    | 3 MB        | 2.43 MB                |
-| Particles at 60 fps           | 500 000     | 1 048 576, vsync-bound |
+| Budget                         | Limit       | Measured               |
+| ------------------------------ | ----------- | ---------------------- |
+| Entry JS bundle                | 100 kB gzip | 88.7 kB                |
+| Renderer chunk, lazily loaded  | 300 kB gzip | 255.2 kB               |
+| Assistant chunk, lazily loaded | 15 kB gzip  | 8.3 kB                 |
+| Stylesheet                     | 12 kB gzip  | 4.3 kB                 |
+| Surrogate inference, p95       | 5 ms        | 0.9 ms                 |
+| Model artifact                 | 1 MB        | 0.71 MB                |
+| Mode atlas                     | 3 MB        | 2.43 MB                |
+| Particles at 60 fps            | 500 000     | 1 048 576, vsync-bound |
 
 The bundle budgets are enforced by `size-limit` on every push; the rest are measured here.
 

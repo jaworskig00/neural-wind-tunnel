@@ -73,7 +73,16 @@ export function FlowField({ prediction, capabilities, onTier }: FlowFieldProps) 
    * without an effect that writes state during render.
    */
   const [override, setOverride] = useState<{ from: Tier; to: Tier } | null>(null)
-  const tier = override?.from === startingTier ? override.to : startingTier
+  /**
+   * The probe's decision only has authority while the tier is automatic.
+   *
+   * Without the `tierChoice` test, picking a tier by hand could silently do nothing: the probe
+   * starts conservatively, so an automatic session that climbed from mid to high leaves an
+   * override whose `from` is the mid tier -- and choosing mid by hand then matches it and is
+   * immediately overridden back to high. The button looked selected and the particle count did
+   * not change.
+   */
+  const tier = tierChoice === 'auto' && override?.from === startingTier ? override.to : startingTier
 
   // The probe is created inside the frame callback rather than during render: a ref may be written
   // from a callback but not while rendering, and the first frame is the earliest it is needed.

@@ -52,7 +52,7 @@ function assertWeights(weights: Weights): void {
 }
 
 /** Class function `C(psi)`. */
-export function classFunction(psi: number): number {
+function classFunction(psi: number): number {
   return Math.pow(psi, CLASS_N1) * Math.pow(1 - psi, CLASS_N2)
 }
 

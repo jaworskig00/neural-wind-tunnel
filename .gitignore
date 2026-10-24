@@ -45,3 +45,6 @@ Thumbs.db
 
 # model artifacts placed by `pnpm models:sync`
 public/models/
+
+# Hero frames: intermediate captures, assembled by scripts/make-hero.sh into docs/media/hero.gif
+docs/media/frames/

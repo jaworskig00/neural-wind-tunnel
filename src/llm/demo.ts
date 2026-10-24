@@ -122,7 +122,7 @@ export function fillPlaceholders(text: string, toolResult: unknown): string {
   })
 }
 
-export function scenarioFor(prompt: string): DemoScenario {
+function scenarioFor(prompt: string): DemoScenario {
   const [first, ...rest] = DEMO_SCENARIOS
   if (!first) throw new Error('No demo scenarios are defined.')
   return [first, ...rest].find((scenario) => scenario.prompt === prompt) ?? first
