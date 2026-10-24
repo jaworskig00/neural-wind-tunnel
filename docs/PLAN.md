@@ -55,13 +55,13 @@ will skim the live demo first and the source second. Both must hold up.
 
 ### Success criteria for the demo
 
-| Criterion | Target |
-|---|---|
-| Time from page load to interactive flow | < 3 s on a cable connection |
-| Latency from slider drag to updated field | < 50 ms end to end |
-| Frame rate, 500k particles, 1440x900, Apple M1 | 60 fps sustained |
-| Accuracy claim on screen | Backed by `docs/accuracy.md`, not adjectives |
-| Works with no API key | Fully, including a recorded LLM demo mode |
+| Criterion                                      | Target                                       |
+| ---------------------------------------------- | -------------------------------------------- |
+| Time from page load to interactive flow        | < 3 s on a cable connection                  |
+| Latency from slider drag to updated field      | < 50 ms end to end                           |
+| Frame rate, 500k particles, 1440x900, Apple M1 | 60 fps sustained                             |
+| Accuracy claim on screen                       | Backed by `docs/accuracy.md`, not adjectives |
+| Works with no API key                          | Fully, including a recorded LLM demo mode    |
 
 ---
 
@@ -149,35 +149,35 @@ data so the explorer can be built before this project's M2 lands.
 
 ## 3. Tech stack
 
-| Choice | Why |
-|---|---|
-| TypeScript strict | Non-negotiable for a code sample. |
-| Vite | Fast, static output, first-class WASM and worker support. |
+| Choice                    | Why                                                                                                              |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| TypeScript strict         | Non-negotiable for a code sample.                                                                                |
+| Vite                      | Fast, static output, first-class WASM and worker support.                                                        |
 | React + react-three-fiber | Declarative scene graph that composes with the UI; the interesting code stays in plain GLSL and raw WebGL calls. |
-| Hand-written GLSL, WebGL2 | Universal support and the shaders are the point. WebGPU is a later, additive path. |
-| zustand | Minimal store, no boilerplate, easy to serialise into the URL. |
-| Tailwind v4 | Fast, consistent chrome without a component library. |
-| D3 | Idiomatic engineering charts, and it mirrors the sister project. |
-| Vitest + Playwright | Unit tests where logic is real, screenshots where the output is visual. |
-| Python 3.12 + uv + NumPy | The solver is linear algebra; uv keeps the env reproducible in CI. |
-| PyTorch to ONNX | Standard export path; ONNX is the canonical artifact. |
-| onnxruntime-web, wasm | Runs everywhere, lazy-loaded off the critical path. |
-| Raw-weights TS fallback | Proves the model is understood, keeps a working path if ORT fails, and gives a numerical parity test. |
+| Hand-written GLSL, WebGL2 | Universal support and the shaders are the point. WebGPU is a later, additive path.                               |
+| zustand                   | Minimal store, no boilerplate, easy to serialise into the URL.                                                   |
+| Tailwind v4               | Fast, consistent chrome without a component library.                                                             |
+| D3                        | Idiomatic engineering charts, and it mirrors the sister project.                                                 |
+| Vitest + Playwright       | Unit tests where logic is real, screenshots where the output is visual.                                          |
+| Python 3.12 + uv + NumPy  | The solver is linear algebra; uv keeps the env reproducible in CI.                                               |
+| PyTorch to ONNX           | Standard export path; ONNX is the canonical artifact.                                                            |
+| onnxruntime-web, wasm     | Runs everywhere, lazy-loaded off the critical path.                                                              |
+| Raw-weights TS fallback   | Proves the model is understood, keeps a working path if ORT fails, and gives a numerical parity test.            |
 
 ### Performance budgets
 
 Enforced in `docs/perf.md` and, where cheap, in CI.
 
-| Budget | Limit |
-|---|---|
-| Initial JS bundle | 250 kB gzip, excluding lazy ORT wasm and the POD atlas |
-| Surrogate inference, p95 | 5 ms |
-| ROM reconstruction pass | 2 ms |
-| Geometry rebuild on slider drag | 16 ms |
-| Particles at 60 fps, Apple M1 | 500k |
-| Model artifact | 1 MB |
-| POD mode atlas | 3 MB |
-| Lighthouse performance, desktop | 90 |
+| Budget                          | Limit                                                  |
+| ------------------------------- | ------------------------------------------------------ |
+| Initial JS bundle               | 250 kB gzip, excluding lazy ORT wasm and the POD atlas |
+| Surrogate inference, p95        | 5 ms                                                   |
+| ROM reconstruction pass         | 2 ms                                                   |
+| Geometry rebuild on slider drag | 16 ms                                                  |
+| Particles at 60 fps, Apple M1   | 500k                                                   |
+| Model artifact                  | 1 MB                                                   |
+| POD mode atlas                  | 3 MB                                                   |
+| Lighthouse performance, desktop | 90                                                     |
 
 ---
 
@@ -190,7 +190,7 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 
 - [ ] **T0.1** Repo created, MIT licence, `.gitignore`, `.editorconfig`, `.nvmrc`, planning docs committed and pushed.
 - [x] **T0.2** Vite + React + TS strict scaffold; `package.json` scripts `dev build preview lint typecheck test test:e2e format`; app renders a placeholder shell.
-- [ ] **T0.3** ESLint flat config + Prettier + lint-staged + git hook; `pnpm lint` clean on a bare repo.
+- [x] **T0.3** ESLint flat config + Prettier + lint-staged + git hook; `pnpm lint` clean on a bare repo.
 - [ ] **T0.4** Vitest configured with a coverage reporter and one real test (CST evaluator fixture placeholder is fine).
 - [ ] **T0.5** Playwright configured; smoke test asserts the app boots with zero console errors and zero failed requests.
 - [ ] **T0.6** Python env via `uv`: `pyproject.toml`, ruff, pytest, `tools/` package layout, one passing test.
@@ -310,16 +310,16 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 
 ## 5. Risks and mitigations
 
-| Risk | Mitigation |
-|---|---|
-| Surrogate inaccurate near stall | Restrict alpha to the range the solver is trustworthy in; warn explicitly outside it; publish error against alpha. |
-| Boundary layer fails to converge on extreme shapes | Validity filters before the dataset run plus an explicit `solver_status`; failed rows are excluded, never imputed. |
-| POD truncation loses the interesting structure | Report captured energy; if 32 modes fall short of 99 %, raise the count and re-measure the atlas budget rather than hiding the error. |
-| No float render targets on the target GPU | Capability detection before the first frame; half-float and reduced-particle tiers; a documented fallback path. |
-| Bundle size from ORT wasm plus the POD atlas | Both lazy-loaded off the critical path; fp16 atlas; `size-limit` in CI. |
-| Temptation to fake the flow | The field is always `mean + sum(a_i * phi_i)` from predicted coefficients. No procedural noise ever stands in for a solution. |
-| ONNX Runtime Web breaking on an update | Pinned version plus the TS fallback backend and a parity test that fails loudly. |
-| Schema drift against the sister project | `DATASET-SCHEMA.md` and `URL-STATE.md` are versioned contracts; changes bump the version and are noted in `CHANGELOG.md`. |
+| Risk                                               | Mitigation                                                                                                                            |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Surrogate inaccurate near stall                    | Restrict alpha to the range the solver is trustworthy in; warn explicitly outside it; publish error against alpha.                    |
+| Boundary layer fails to converge on extreme shapes | Validity filters before the dataset run plus an explicit `solver_status`; failed rows are excluded, never imputed.                    |
+| POD truncation loses the interesting structure     | Report captured energy; if 32 modes fall short of 99 %, raise the count and re-measure the atlas budget rather than hiding the error. |
+| No float render targets on the target GPU          | Capability detection before the first frame; half-float and reduced-particle tiers; a documented fallback path.                       |
+| Bundle size from ORT wasm plus the POD atlas       | Both lazy-loaded off the critical path; fp16 atlas; `size-limit` in CI.                                                               |
+| Temptation to fake the flow                        | The field is always `mean + sum(a_i * phi_i)` from predicted coefficients. No procedural noise ever stands in for a solution.         |
+| ONNX Runtime Web breaking on an update             | Pinned version plus the TS fallback backend and a parity test that fails loudly.                                                      |
+| Schema drift against the sister project            | `DATASET-SCHEMA.md` and `URL-STATE.md` are versioned contracts; changes bump the version and are noted in `CHANGELOG.md`.             |
 
 ---
 

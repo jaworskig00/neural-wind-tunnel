@@ -96,12 +96,12 @@ into this wind tunnel; the shared contracts are
 
 ## Repository map
 
-| Path | Contents |
-|---|---|
-| `tools/` | Python: solver, dataset pipeline, training and export |
-| `src/` | TypeScript app: geometry, inference, reduced-order model, GPGPU, scene, shaders, charts, LLM |
-| `docs/` | Plan, decision records, data contracts, accuracy, performance, screenshots |
-| `data/sample/` | A small committed sample of the dataset, for tests and consumers |
+| Path           | Contents                                                                                     |
+| -------------- | -------------------------------------------------------------------------------------------- |
+| `tools/`       | Python: solver, dataset pipeline, training and export                                        |
+| `src/`         | TypeScript app: geometry, inference, reduced-order model, GPGPU, scene, shaders, charts, LLM |
+| `docs/`        | Plan, decision records, data contracts, accuracy, performance, screenshots                   |
+| `data/sample/` | A small committed sample of the dataset, for tests and consumers                             |
 
 ## Licence
 

@@ -52,3 +52,22 @@ different project's config on 5173. Linting is still the template's default; T0.
 with ESLint as the plan specifies.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T0.3 ESLint, Prettier and the pre-commit hook
+
+**Done.** ESLint 10 flat config with `typescript-eslint` 8.72 `strictTypeChecked` (type-aware,
+via the project service), the flat variant of `eslint-plugin-react-hooks` 7 for `.tsx` files,
+`eslint-plugin-react-refresh`, and `eslint-config-prettier` last so formatting rules stay off.
+Prettier configured at 100 columns, no semicolons, single quotes. `simple-git-hooks` installs a
+pre-commit hook that runs `lint-staged` over staged TypeScript, config, markdown and Python
+files.
+
+**Verified.** `pnpm lint` exits 0 on the whole tree, `pnpm typecheck` clean, `prettier --write`
+reformatted two files and is now idempotent, and `.git/hooks/pre-commit` exists and calls
+`lint-staged`.
+
+**Follow-ups.** The plugin's `configs['recommended-latest']` is still eslintrc-shaped; the flat
+config lives under `configs.flat['recommended-latest']`, which is what this project uses. Noted
+here because the plugin's README shows the other one.
+
+**Commit.** see `git log`
