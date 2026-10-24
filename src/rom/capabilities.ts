@@ -86,14 +86,18 @@ export function tierByName(name: TierName): Tier {
 /**
  * The tier to start from.
  *
- * A machine without renderable float targets is not going to sustain a million particles either, so
- * the capability check doubles as a first guess. The frame-time probe then moves up or down from
- * here with evidence.
+ * Deliberately conservative, even on hardware that reports everything. A capability check says what
+ * a driver claims to support, not what it will sustain: a software renderer answers yes to all of
+ * it and then takes a tenth of a second per frame at a million particles, which is a terrible first
+ * impression and, on a slow machine, several seconds before anything appears at all.
+ *
+ * So the first guess is the middle tier, which holds 30 frames per second with no GPU whatsoever,
+ * and the frame-time probe raises it within a second or two on hardware that can take it. Starting
+ * low and climbing is invisible; starting high and stuttering is the first thing anyone notices.
  */
 export function initialTier(capabilities: GpuCapabilities): Tier {
   if (!capabilities.webgl2 || !capabilities.colorBufferHalfFloat) return tierByName('low')
-  if (!capabilities.colorBufferFloat || capabilities.maxTextureSize < 4096) return tierByName('mid')
-  return tierByName('high')
+  return tierByName('mid')
 }
 
 /** What the flow field reports about the tier it is actually running. */

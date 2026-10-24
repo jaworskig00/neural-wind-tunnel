@@ -81,8 +81,9 @@ export async function waitForRenderedSection(page: Page): Promise<void> {
   await page.waitForTimeout(1500)
   await expect
     .poll(async () => (await sampleCanvas(page))?.centre ?? 0, {
-      timeout: 20_000,
-      intervals: [250, 250, 500, 500, 1000],
+      // Generous: a runner without a GPU can take seconds per frame while the shaders compile.
+      timeout: 45_000,
+      intervals: [250, 250, 500, 500, 1000, 2000],
       message: 'renderer never drew the section into the canvas',
     })
     .toBeGreaterThan(LIT_CENTRE)
