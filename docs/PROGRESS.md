@@ -90,3 +90,17 @@ unwrap helper in every assertion reads worse than the assertion. Production code
 on. `docs/PLAN.md` folder map updated: unit tests are co-located, `tests/e2e` is Playwright's.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T0.5 Playwright smoke suite
+
+**Done.** Playwright configured against a 1440x900 viewport (the same size the M6 frame-time
+budget is measured at), with its own dev server on port 5182, the GitHub reporter under CI and
+a trace on first retry. Two specs: the app boots with no console errors, no page errors and no
+failed or 4xx/5xx requests; and the shell renders the station grid values the schema requires.
+
+**Verified.** `pnpm test:e2e` 2 passed in 2.5 s. `pnpm lint` and `pnpm typecheck` clean.
+Chromium headless shell 156 installed locally.
+
+**Follow-ups.** None. Screenshot capture for the README is T4.5 and T9.2.
+
+**Commit.** see `git log`
