@@ -360,3 +360,42 @@ converged rows. The surrogate will be weakest at the extremes of the range, whic
 `docs/accuracy.md` must show per incidence. A guard was also added for a boundary-layer branch of
 fewer than three points, which happens when the stagnation point lands on the trailing edge at
 extreme incidence; it reports failure instead of raising.
+
+---
+
+## ADR-017 — Thirty-two POD modes stand, and the error is reported by region
+
+**Status.** accepted
+
+**Context.** The plan's acceptance criterion for the reduced-order basis was "POD energy at 32
+modes is at least 99 %". On the full 67 200-row dataset the measured figures are 98.26 % of
+in-sample variance and a 10.11 % relative rms reconstruction error over every row — well short of
+it. A twenty-shape trial had suggested 99.87 %, but its basis was built from the very snapshots it
+then reconstructed, so that number was never out-of-sample.
+
+**Investigation.** Raising the subsample from 3000 to 8000 snapshots changed nothing, so the basis
+is converged and the mode count is the binding constraint. Raising the mode count helps slowly:
+48 modes give 98.71 % and 8.69 % error for a 3.6 MB atlas, 64 modes give 98.98 % and 7.81 % for
+4.8 MB, against 2.4 MB at 32. Doubling the modes buys a fifth of the error and breaks the 3 MB
+atlas budget.
+
+Splitting the error by region explains why, and changes the conclusion. The section occupies a
+different set of grid points in every row, so the masked body is a moving discontinuity — exactly
+what a linear basis cannot compress. Over the 93 % of the domain away from the section the
+reconstruction is accurate to **1.14 %** of the freestream, an absolute velocity error of 0.0011.
+Within the band around the section it is **17.7 %**, and that band is where the renderer masks the
+body with a signed distance field and kills particles anyway.
+
+**Decision.** Keep 32 modes. The schema's 32 coefficient columns stand, the atlas stays at 2.43 MB,
+and the acceptance criterion in `docs/PLAN.md` is rewritten to the measured truth with the regional
+split, rather than being quietly dropped or met by inflating the mode count.
+
+`docs/dataset.md` publishes all three figures and `tools/dataset/pod.py` gains `spatial_error`, so
+the breakdown is regenerated from the data rather than typed in once.
+
+**Consequences.** The honest claim is that the flow field a viewer sees is reconstructed to about
+one per cent of the freestream everywhere the flow is visible, and that accuracy degrades sharply in
+the few grid cells adjacent to the surface. `docs/accuracy.md` must repeat this, and the README's
+honesty section must not quote the 98.26 % figure without the regional split beside it. If a future
+version wants a genuinely better near-surface field, the fix is a body-fitted or
+signed-distance-aware representation, not more modes.

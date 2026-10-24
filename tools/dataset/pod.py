@@ -21,6 +21,7 @@ of fields runs to several gigabytes.
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -213,3 +214,157 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+# --- Streaming variants -------------------------------------------------------------------------
+# The full set of fields for a production run is several gigabytes, so nothing below ever holds
+# more than one shard plus the basis in memory. Each shard file is memory-mapped and read in one
+# pass; the subsample that builds the basis is strided across every shard so it stays representative
+# rather than favouring whichever shapes happened to be solved first.
+
+
+def _shard_rows(path: Path) -> int:
+    return int(np.load(path, mmap_mode="r").shape[0])
+
+
+def streaming_mean(paths: Sequence[Path]) -> NDArray[np.float32]:
+    """Mean perturbation field across every shard."""
+    total = np.zeros(FIELD_LENGTH, dtype=np.float64)
+    rows = 0
+    for path in paths:
+        shard = np.load(path, mmap_mode="r")
+        for begin in range(0, shard.shape[0], PROJECTION_CHUNK):
+            block = np.asarray(shard[begin : begin + PROJECTION_CHUNK], dtype=np.float32)
+            total += block.sum(axis=0, dtype=np.float64)
+        rows += shard.shape[0]
+    if rows == 0:
+        raise ValueError("no field shards")
+    return (total / rows).astype(np.float32)
+
+
+def streaming_subsample(paths: Sequence[Path], target: int, seed: int) -> NDArray[np.float32]:
+    """A strided subsample drawn evenly from every shard."""
+    per_shard = max(1, target // max(len(paths), 1))
+    rng = np.random.default_rng(seed)
+    chosen: list[NDArray[np.float32]] = []
+    for path in paths:
+        shard = np.load(path, mmap_mode="r")
+        count = min(per_shard, shard.shape[0])
+        indices = np.sort(rng.choice(shard.shape[0], size=count, replace=False))
+        chosen.append(np.asarray(shard[indices], dtype=np.float32))
+    return np.concatenate(chosen)
+
+
+def compute_basis_streaming(
+    paths: Sequence[Path],
+    mode_count: int = DEFAULT_MODE_COUNT,
+    subsample: int = DEFAULT_SUBSAMPLE,
+    seed: int = 20261024,
+) -> PodBasis:
+    """Build the basis without ever loading every field at once."""
+    mean = streaming_mean(paths)
+    snapshots = streaming_subsample(paths, subsample, seed) - mean
+
+    correlation = snapshots @ snapshots.T
+    eigenvalues, eigenvectors = np.linalg.eigh(correlation)
+    order = np.argsort(eigenvalues)[::-1]
+    eigenvalues = np.clip(eigenvalues[order], 0.0, None)
+    eigenvectors = eigenvectors[:, order]
+
+    total = float(eigenvalues.sum())
+    captured = np.cumsum(eigenvalues) / total if total > 0 else np.zeros_like(eigenvalues)
+
+    modes = (eigenvectors[:, :mode_count].T @ snapshots).astype(np.float32)
+    norms = np.linalg.norm(modes, axis=1, keepdims=True)
+    norms[norms == 0.0] = 1.0
+    modes /= norms
+
+    return PodBasis(
+        mean=mean,
+        modes=modes,
+        singular_values=np.sqrt(eigenvalues[:mode_count]),
+        captured_energy=captured,
+        subsample_size=snapshots.shape[0],
+    )
+
+
+def project_streaming(paths: Sequence[Path], basis: PodBasis) -> tuple[Array, dict[str, float]]:
+    """Coefficients for every row in shard order, with the reconstruction error alongside."""
+    coefficients: list[Array] = []
+    squared_error = 0.0
+    squared_signal = 0.0
+    worst = 0.0
+
+    for path in paths:
+        shard = np.load(path, mmap_mode="r")
+        for begin in range(0, shard.shape[0], PROJECTION_CHUNK):
+            block = np.asarray(shard[begin : begin + PROJECTION_CHUNK], dtype=np.float32)
+            centred = block - basis.mean
+            chunk_coefficients = centred @ basis.modes.T
+            coefficients.append(chunk_coefficients.astype(np.float64))
+
+            residual = centred - chunk_coefficients @ basis.modes
+            squared_error += float(np.sum(residual**2))
+            squared_signal += float(np.sum(block**2))
+            row_relative = np.linalg.norm(residual, axis=1) / np.maximum(
+                np.linalg.norm(block, axis=1), 1e-12
+            )
+            worst = max(worst, float(row_relative.max()))
+
+    error = {
+        "relative_rms": float(np.sqrt(squared_error / max(squared_signal, 1e-30))),
+        "worst_row_relative": worst,
+    }
+    return np.concatenate(coefficients), error
+
+
+def spatial_error(paths: Sequence[Path], basis: PodBasis, shards: int = 10) -> dict[str, float]:
+    """Where the truncation error actually lives.
+
+    A single relative-rms figure hides the thing that matters here. The body occupies a different
+    set of grid points in every row, so the masked region is a moving discontinuity -- precisely the
+    structure a linear basis cannot compress. Splitting the error by region shows whether the
+    remainder of the field, which is what the particles and streamlines actually traverse, is
+    reconstructed well. Measured over the first ``shards`` shards, which is ample.
+    """
+    from tools.solver.field import grid_coordinates
+
+    points = GRID_NY * GRID_NX
+    squared_error = np.zeros(2 * points)
+    squared_signal = np.zeros(2 * points)
+    rows = 0
+
+    for path in paths[:shards]:
+        shard = np.load(path, mmap_mode="r")
+        for begin in range(0, shard.shape[0], PROJECTION_CHUNK):
+            block = np.asarray(shard[begin : begin + PROJECTION_CHUNK], dtype=np.float32)
+            coefficients = (block - basis.mean) @ basis.modes.T
+            residual = block - (basis.mean + coefficients @ basis.modes)
+            squared_error += np.sum(residual.astype(np.float64) ** 2, axis=0)
+            squared_signal += np.sum(block.astype(np.float64) ** 2, axis=0)
+            rows += block.shape[0]
+
+    def fold(values: NDArray[np.float64]) -> NDArray[np.float64]:
+        return (values[:points] + values[points:]).reshape((GRID_NY, GRID_NX))
+
+    error_grid = fold(squared_error)
+    signal_grid = fold(squared_signal)
+
+    x, y = grid_coordinates()
+    mesh_x, mesh_y = np.meshgrid(x, y)
+    # The band the section and its immediate wake occupy, generously drawn.
+    near_body = (mesh_x > -0.08) & (mesh_x < 1.08) & (np.abs(mesh_y) < 0.14)
+
+    def ratio(mask: NDArray[np.bool_]) -> float:
+        return float(np.sqrt(error_grid[mask].sum() / max(signal_grid[mask].sum(), 1e-30)))
+
+    everywhere = np.ones_like(near_body)
+    return {
+        "rows": float(rows),
+        "overall": ratio(everywhere),
+        "near_body": ratio(near_body),
+        "away_from_body": ratio(~near_body),
+        "near_body_points": float(near_body.sum()),
+        "away_points": float((~near_body).sum()),
+        "away_absolute_rms": float(np.sqrt((error_grid[~near_body] / rows).mean())),
+    }

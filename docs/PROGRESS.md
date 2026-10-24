@@ -405,3 +405,34 @@ the desktop browser (Apple M4 Pro via ANGLE Metal) and in headless SwiftShader, 
 float render-target path rather than the fallback.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T2.4 Dataset assembly and coverage report
+
+**Done.** `tools/dataset/build.py` turns the shards into everything the Release carries:
+`designs.parquet` with the geometry columns recomputed exactly from the CST weights and the 32
+modal coefficients filled in, the basis as both an npz and the browser's float16 atlas,
+`cp_stations.json`, `manifest.json` with bounds and checksums, the 2000-row sample CSV committed to
+the repository, and `docs/dataset.md`. The basis is built and projected shard by shard so nothing
+ever holds more than one shard in memory; the full field set is 4.7 GB.
+
+**Verified.** `uv run pytest tools/dataset` 33 passed. The run produced **67 200 rows over 8400
+shapes, 41 541 of them converged** (61.8 %), clearing the 40 000-row criterion. Convergence by
+incidence runs 60 % at -6 to -4 degrees, peaks near zero and falls away above six, as predicted.
+`designs.parquet` is 109.3 MB.
+
+**Follow-ups.** The headline reduced-order number missed its target and the investigation changed
+the conclusion, so ADR-017 records it in full. Thirty-two modes capture 98.26 % of in-sample variance
+and reconstruct with a 10.11 % relative rms error over every row, against a planned 99 %. The trial
+figure of 99.87 % had been measured on the snapshots the basis was built from, so it was never
+out-of-sample. Raising the subsample from 3000 to 8000 changes nothing; raising the modes to 48 or
+64 buys 8.7 % and 7.8 % for atlases of 3.6 MB and 4.8 MB against a 3 MB budget.
+
+Splitting the error by region is what settled it: away from the section, over 93 % of the domain, the
+reconstruction is accurate to **1.14 %** of the freestream — an absolute error of 0.0011 — while in
+the band around the section it is **17.7 %**. The section occupies different grid points in every
+row, so the masked body is a moving discontinuity, which is the one structure a linear basis cannot
+compress; and that band is where the renderer masks the body anyway. Thirty-two modes stand, the
+acceptance criterion in `docs/PLAN.md` is rewritten to the measured truth, and `pod.py` gained
+`spatial_error` so the breakdown is regenerated rather than typed once.
+
+**Commit.** see `git log`
