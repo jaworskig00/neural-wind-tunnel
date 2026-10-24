@@ -67,6 +67,10 @@ export function ParameterPanel() {
   const nudgeThickness = useAppStore((state) => state.nudgeThickness)
   const addCamber = useAppStore((state) => state.addCamber)
   const reset = useAppStore((state) => state.reset)
+  const trailIntensity = useAppStore((state) => state.trailIntensity)
+  const setTrailIntensity = useAppStore((state) => state.setTrailIntensity)
+  const tier = useAppStore((state) => state.tier)
+  const setTier = useAppStore((state) => state.setTier)
 
   const metrics = useMemo(() => sectionMetrics(section.upper, section.lower), [section])
 
@@ -162,6 +166,41 @@ export function ParameterPanel() {
             More camber
           </button>
         </div>
+      </section>
+
+      <section>
+        <h2 className="mb-2 text-[0.7rem] font-semibold tracking-[0.08em] text-muted uppercase">
+          Flow field
+        </h2>
+        <Slider
+          label="Trails"
+          value={trailIntensity}
+          min={0}
+          max={2}
+          step={0.05}
+          onChange={setTrailIntensity}
+        />
+        <div className="mt-1.5 grid grid-cols-4 gap-1 text-[0.65rem]">
+          {(['auto', 'low', 'mid', 'high'] as const).map((choice) => (
+            <button
+              key={choice}
+              type="button"
+              onClick={() => {
+                setTier(choice)
+              }}
+              className={`rounded border py-1 transition-colors ${
+                tier === choice
+                  ? 'border-accent bg-raised text-accent'
+                  : 'border-line bg-base text-muted hover:border-faint hover:text-text'
+              }`}
+            >
+              {choice}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1 text-xs text-faint">
+          Particle count. <span className="tabular">auto</span> picks from what the GPU reports.
+        </p>
       </section>
 
       <section>

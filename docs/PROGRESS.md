@@ -551,3 +551,55 @@ An end-to-end test also broke on a substring: the chart's new caption mentions a
 `getByText('Edited')` then matched two elements. Both assertions now use test ids.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T6.1 to T6.4 The GPU flow field
+
+**Done.** The reduced-order reconstruction, the particle simulation and the trail buffer. Thirty-two
+modal coefficients come out of the surrogate; one fragment pass rebuilds a 192 by 96 velocity field
+from them; a second advects up to a million particles through it with Runge-Kutta; a third fades
+their history so each leaves a decaying streak; a fourth composites that over the scene. Particle
+positions never touch the CPU. The body is masked by rasterising the section itself into a small
+target rather than testing a polygon per particle, and the panel gained trail-exposure and
+particle-count controls.
+
+**Verified.** 9 end-to-end tests and 64 unit tests pass, lint and typecheck clean, budgets held
+(entry 85.7 kB gzip, renderer 253.8 kB). The field reconstruction was checked by reading the target
+back: at the inlet it gives `u` 0.98 and `v` 0.05 against a freestream of `cos 2°` and `sin 2°`.
+Particle positions were read back and confirmed to vary per texel and to advect.
+
+**Follow-ups.** Five real bugs, every one of which produced a plausible-looking frame rather than an
+error, and all five are now documented where they happened.
+
+*Particles seeded from cleared memory.* The update shader treated an alpha of zero as "needs a
+starting position", and the renderer clears to an opaque colour, so the test never fired: a quarter
+of a million particles all started at the origin and advected as a single point. Seeding is now an
+explicit pass.
+
+*A hash that collapses.* The usual `fract(sin(dot(p, k)) * 43758.5453)` reaches 1e7, where float32
+resolves to about 2, so `fract` quantises and neighbouring texels hash identically. Replaced, and
+the replacement is fed integer texel coordinates rather than normalised ones -- the same hash
+returns near-identical values for inputs a five-hundredth apart.
+
+*A `uv` varying that arrived constant.* Every full-screen pass now derives its coordinate from
+`gl_FragCoord` and an explicit resolution uniform, which the rasteriser cannot fail to supply.
+
+*React-three-fiber hands over the render loop* at any positive `useFrame` priority. The scene simply
+stopped being drawn while the trail composite accumulated onto an uncleared buffer -- a uniformly
+white frame that survived every attempt to turn the trails down. The callback now renders the scene
+itself.
+
+*Two feedback loops*, where a texture bound for reading was also the render target. The driver
+refuses the draw and reports a warning; the frame goes black. Both the trail composite and the
+particle render material now release their texture before it becomes a target.
+
+Two smaller ones: the composite used the CSS size rather than the drawing buffer size, which on a
+pixel ratio of two drew the pass at double scale and showed a quarter of it; and trail exposure is
+now tone-mapped rather than scaled linearly, because the right linear constant depends on particle
+count, trail length and how much of the domain is on screen, and being a factor of three out is the
+difference between invisible and white.
+
+Worth recording about method: the browser pane's screenshots of this WebGL canvas were repeatedly
+wrong -- showing a blank viewport while a pixel read of the same frame returned the rendered image.
+Several of the above were diagnosed only after switching to reading the framebuffer directly.
+
+**Commit.** see `git log`

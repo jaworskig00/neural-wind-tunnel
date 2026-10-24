@@ -33,6 +33,7 @@ function clampWeight(
 }
 
 export type ViewMode = 'particles' | 'streamlines' | 'both' | 'surface'
+export type TierChoice = 'auto' | 'high' | 'mid' | 'low'
 export type { ColormapName as Colormap } from '../scene/pressureScale'
 
 export interface AppState {
@@ -42,6 +43,9 @@ export interface AppState {
   /** Set when the current section came from a preset and has not been edited since. */
   readonly view: ViewMode
   readonly colormap: ColormapName
+  /** Trail exposure. Tone-mapped, so this is an exposure stop rather than a linear gain. */
+  readonly trailIntensity: number
+  readonly tier: TierChoice
 
   setUpperWeight: (index: number, value: number) => void
   setLowerWeight: (index: number, value: number) => void
@@ -53,6 +57,8 @@ export interface AppState {
   addCamber: (amount: number) => void
   setView: (view: ViewMode) => void
   setColormap: (colormap: ColormapName) => void
+  setTrailIntensity: (intensity: number) => void
+  setTier: (tier: TierChoice) => void
   reset: () => void
 }
 
@@ -64,6 +70,8 @@ export const useAppStore = create<AppState>((set) => ({
   presetId: DEFAULT_PRESET_ID,
   view: 'particles',
   colormap: 'coolwarm',
+  trailIntensity: 0.5,
+  tier: 'auto',
 
   setUpperWeight: (index, value) => {
     set((state) => ({
@@ -126,6 +134,14 @@ export const useAppStore = create<AppState>((set) => ({
   setView: (view) => {
     set({ view })
   },
+
+  setTrailIntensity: (trailIntensity) => {
+    set({ trailIntensity: clamp(trailIntensity, 0, 3) })
+  },
+
+  setTier: (tier) => {
+    set({ tier })
+  },
   setColormap: (colormap) => {
     set({ colormap })
   },
@@ -137,6 +153,8 @@ export const useAppStore = create<AppState>((set) => ({
       presetId: DEFAULT_PRESET_ID,
       view: 'particles',
       colormap: 'coolwarm',
+      trailIntensity: 0.5,
+      tier: 'auto',
     })
   },
 }))

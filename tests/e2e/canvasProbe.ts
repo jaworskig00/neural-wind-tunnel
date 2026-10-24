@@ -12,6 +12,8 @@ import { type Page, expect } from '@playwright/test'
 export interface CanvasSample {
   readonly centre: number
   readonly corner: number
+  /** Brightness across a horizontal line, for checking the frame is not uniform. */
+  readonly row: number[]
 }
 
 declare global {
@@ -40,7 +42,8 @@ export async function installCanvasProbe(page: Page): Promise<void> {
         )
         return (pixel[0] ?? 0) + (pixel[1] ?? 0) + (pixel[2] ?? 0)
       }
-      return { centre: read(0.5, 0.5), corner: read(0.05, 0.95) }
+      const row = [0.1, 0.25, 0.4, 0.55, 0.7, 0.85].map((x) => read(x, 0.5))
+      return { centre: read(0.5, 0.5), corner: read(0.05, 0.95), row }
     }
   })
 }

@@ -27,7 +27,23 @@ test.describe('viewport', () => {
     expect(sample?.centre, 'section is lit in the middle of the viewport').toBeGreaterThan(
       LIT_CENTRE,
     )
-    expect(sample?.corner, 'background stays dark in the corner').toBeLessThan(120)
+
+    // Not "the corner is dark": the flow field fills the frame with trails, so darkness there
+    // would mean the particles are missing. What still distinguishes a working render from a
+    // broken one is that the frame carries structure rather than one flat value.
+    const row = sample?.row ?? []
+    expect(row.length).toBeGreaterThan(3)
+    const spread = Math.max(...row) - Math.min(...row)
+    expect(spread, 'the frame carries structure rather than one flat value').toBeGreaterThan(10)
+    expect(Math.max(...row), 'the frame is not saturated to white').toBeLessThan(760)
+  })
+
+  test('the flow field lights the background', async ({ page }) => {
+    // With particles switched off the background is the scene's own near-black; with them on the
+    // trails raise it. This is what proves the GPGPU path ran, rather than that a canvas exists.
+    await waitForRenderedSection(page)
+    const withParticles = await sampleCanvas(page)
+    expect(withParticles?.corner, 'trails brighten the background').toBeGreaterThan(60)
   })
 
   test('reports the metrics of the default section', async ({ page }) => {

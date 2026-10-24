@@ -259,10 +259,10 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 
 ### M6 — GPU flow field and particles
 
-- [ ] **T6.1** POD atlas loader: fetch the fp16 atlas, upload as a texture array or atlas, detect `EXT_color_buffer_float` and `OES_texture_float_linear`, pick the precision tier before the first frame.
-- [ ] **T6.2** ROM reconstruction pass: one fragment shader that writes `u, v` into a float render target from the mean field plus the 32 predicted coefficients; runs only when the prediction changes.
-- [ ] **T6.3** GPGPU particle system: position and age textures, ping-pong FBOs, RK2 advection sampling the reconstructed field, respawn at the inlet, airfoil SDF mask so nothing enters the body.
-- [ ] **T6.4** Particle rendering: additive points sized by depth, coloured by local speed or by surface Cp proximity, trails via an accumulation target with per-frame decay.
+- [x] **T6.1** POD atlas loader: fetch the fp16 atlas, upload as a texture array or atlas, detect `EXT_color_buffer_float` and `OES_texture_float_linear`, pick the precision tier before the first frame.
+- [x] **T6.2** ROM reconstruction pass: one fragment shader that writes `u, v` into a float render target from the mean field plus the 32 predicted coefficients; runs only when the prediction changes.
+- [x] **T6.3** GPGPU particle system: position and age textures, ping-pong FBOs, RK2 advection sampling the reconstructed field, respawn at the inlet, airfoil SDF mask so nothing enters the body.
+- [x] **T6.4** Particle rendering: additive points sized by depth, coloured by local speed or by surface Cp proximity, trails via an accumulation target with per-frame decay.
 - [ ] **T6.5** Performance tiering: short FPS probe on start picks 1M, 500k or 150k particles; a no-float-render-target path degrades to a lower-precision field and fewer particles instead of failing; a manual override in the UI.
 - [ ] **T6.6** `docs/perf.md` with measured numbers on at least two GPUs, plus the probe logic explained; tag `v0.7.0-m6`.
 

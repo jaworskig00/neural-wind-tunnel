@@ -8,9 +8,10 @@
  */
 
 import colormap from './lib/colormap.glsl?raw'
+import hash from './lib/hash.glsl?raw'
 import stations from './lib/stations.glsl?raw'
 
-const CHUNKS: Readonly<Record<string, string>> = { colormap, stations }
+const CHUNKS: Readonly<Record<string, string>> = { colormap, hash, stations }
 
 const INCLUDE_PATTERN = /^[ \t]*#include <([\w-]+)>[ \t]*$/gm
 

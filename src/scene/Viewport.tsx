@@ -2,7 +2,9 @@ import { Grid, OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { useEffect, useMemo } from 'react'
 
+import { FlowField } from './FlowField'
 import type { Prediction } from '../ml/types'
+import { type GpuCapabilities, detectCapabilities } from '../rom/capabilities'
 import { useAppStore } from '../state/store'
 import { buildAirfoilGeometry } from './airfoilGeometry'
 import { createPressureMaterial } from './pressureMaterial'
@@ -45,6 +47,10 @@ function AirfoilMesh({ prediction }: { readonly prediction: Prediction | null })
  * reads from a field aligned with the world x axis, so the freestream must stay put.
  */
 export function Viewport({ prediction }: { readonly prediction: Prediction | null }) {
+  // Probed once, before the scene exists, so the flow field never has to discover mid-frame that
+  // the hardware cannot do what it assumed.
+  const capabilities = useMemo<GpuCapabilities>(() => detectCapabilities(), [])
+
   return (
     <Canvas
       // Close to side-on, lifted just enough to read as three-dimensional. An oblique default
@@ -64,6 +70,7 @@ export function Viewport({ prediction }: { readonly prediction: Prediction | nul
       <directionalLight position={[-2, -1, -2]} intensity={0.35} color="#8ab4f8" />
 
       <AirfoilMesh prediction={prediction} />
+      <FlowField prediction={prediction} capabilities={capabilities} />
 
       <Grid
         args={[8, 8]}
