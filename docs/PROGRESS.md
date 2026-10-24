@@ -494,11 +494,11 @@ still reproduce the committed reference case.
 
 **Verified.** 177 059 parameters, 0.71 MB. On sections the model has never seen at any incidence:
 
-| output | mean absolute error | R-squared |
-|---|---|---|
-| `cl` | 0.0095 | 0.996 |
-| `cd` | 0.00020 | 0.969 |
-| `cm_quarter` | 0.0014 | 0.982 |
+| output       | mean absolute error | R-squared |
+| ------------ | ------------------- | --------- |
+| `cl`         | 0.0095              | 0.996     |
+| `cd`         | 0.00020             | 0.969     |
+| `cm_quarter` | 0.0014              | 0.982     |
 
 Pressure rms 0.055 over 128 stations, modal coefficients 6.0 % relative. ONNX agrees with PyTorch
 to 5.5e-6 and the raw blob to 4.3e-6, both far inside the 1e-4 tolerance. In the app at two degrees,
