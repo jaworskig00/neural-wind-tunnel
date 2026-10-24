@@ -22,7 +22,7 @@ The agent verifies this itself before task T0.2 and logs the result in
 - [x] Node matches `.nvmrc` (25.x) and `pnpm --version` is 10.x
 - [x] `python3 --version` is 3.12+ and `uv --version` works
 - [x] `pnpm exec playwright install chromium` succeeds
-- [x] A WebGL2 context with `EXT_color_buffer_float` is available in headless Chromium
+- [ ] A WebGL2 context with `EXT_color_buffer_float` is available in headless Chromium
       (if not: M6 tasks run with the half-float fallback path and this is noted in `docs/perf.md`)
 
 Nothing in this plan requires a paid service, an API key or a human decision.
