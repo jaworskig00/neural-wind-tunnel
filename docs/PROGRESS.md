@@ -314,3 +314,30 @@ fewer than three points, which happens when the stagnation point lands on the tr
 reports failure rather than raising out of `np.gradient`.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T2.2 and T2.3 Batch runner and proper orthogonal decomposition
+
+**Done.** `tools/dataset/run.py` solves sampled shapes in parallel, writing shards of a parquet
+table and a float16 field array; a shard whose two files exist is skipped, so an interrupted run
+resumes by being restarted. `tools/dataset/pod.py` builds the basis by snapshot POD — eigenvectors
+of the small correlation matrix rather than an SVD of the tall snapshot matrix — from a subsample,
+then projects every row in chunks, and writes the basis twice: float32 in an npz for Python and
+float16 in the flat atlas the browser uploads as a texture.
+
+The stored field is the _perturbation_, `(u - cos(alpha), v - sin(alpha))` with the body zeroed,
+not the total. It decays to zero far from the section, so POD compresses it far better, and
+incidence then enters the browser's reconstruction analytically instead of having to be learnt.
+
+**Verified.** `uv run pytest tools/dataset` 28 passed, including that a synthetic rank-five set is
+captured exactly by five modes, that the modes come out orthonormal, that truncation error falls as
+modes are added, and that projection is chunk-invariant. A twenty-shape trial produced 160 rows
+with all 162 schema columns in the published order, 60 % of them converged, `design_id` contiguous,
+and resumption correctly found nothing left to solve. On that trial 32 modes captured 99.87 % of
+variance with a 2.66 % relative rms reconstruction error and a 2.43 MB atlas, inside the 3 MB
+budget — the honest figure comes from the full run, since the trial's subsample was the whole set.
+
+**Follow-ups.** Throughput is about 100 ms per row including the field, so 67 200 rows take roughly
+fourteen minutes across eight workers and 4.9 GB of temporary field shards, which are gitignored
+and deleted after the basis is built.
+
+**Commit.** see `git log`
