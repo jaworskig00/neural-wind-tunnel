@@ -240,3 +240,34 @@ out by a factor of four — worth remembering. `docs/DATASET-SCHEMA.md` now warn
 density thins above about six degrees.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T1.5 Velocity field sampling
+
+**Done.** `tools/solver/field.py` evaluates the velocity the panel distribution induces anywhere
+in the plane and samples it on the 192 by 96 grid from `docs/DATASET-SCHEMA.md` section 4, with a
+vectorised crossing-number test masking the body. The per-panel integrals are closed form and
+free of the `1/y` that appears in the intermediate steps, so no special case is needed near the
+panel line. Evaluation is chunked at 2048 points because the dense points-by-panels intermediates
+would otherwise allocate several hundred megabytes per worker during the dataset run. `solve` now
+takes `with_field` and carries the result.
+
+**Verified.** `uv run pytest` 89 passed. The panel velocity formula matches direct quadrature of
+point vortices to six decimals on four independent cases. Induced velocity decays as exactly
+`1/r` and converges to the point-vortex limit `Gamma / (2 pi r)` within 1 % at a thousand chords.
+The counter-clockwise line integral around a rectangle three chords on a side equals `-cl / 2` to
+one part in a thousand. A symmetric section at zero incidence gives an even `u` and an odd `v` to
+1e-9. One solve takes 2.1 ms, or 84.9 ms with the field.
+
+**Follow-ups.** The signed circulation check caught a real inverted vortex sign: the panel solver
+follows Kuethe and Chow's rotational convention, which is opposite to the point-vortex convention
+the field integrals are derived in. The far field and the circulation _magnitude_ were both
+correct while the near field was slowing the flow over the shoulder instead of speeding it up —
+exactly the kind of error that would have produced a beautiful, wrong particle animation. Both
+the signed circulation and the near-field acceleration are now asserted.
+
+A surface-limit consistency test comparing the field just outside a control point against the
+panel edge velocity was tried and dropped: evaluating on a vortex sheet returns the mean of the
+two sides rather than the outside value, so the comparison needs a `gamma/2` correction and is
+delicate at panel-length scales. The circulation integral covers the same ground unambiguously.
+
+**Commit.** see `git log`

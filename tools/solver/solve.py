@@ -13,6 +13,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from tools.solver.boundary_layer import SurfaceBoundaryLayer, SurfaceStatus, march_surface
+from tools.solver.field import VelocityField, sample_field
 from tools.solver.geometry import Airfoil
 from tools.solver.panel import PanelSolution, solve_inviscid
 
@@ -50,6 +51,8 @@ class SolverResult:
     panel: PanelSolution
     upper: SurfaceBoundaryLayer | None
     lower: SurfaceBoundaryLayer | None
+    field: VelocityField | None
+    """Sampled velocity field, present only when ``with_field`` was requested."""
 
     @property
     def cp_stations(self) -> Array:
@@ -122,12 +125,22 @@ def _friction_drag(
     return total
 
 
-def solve(airfoil: Airfoil, alpha_deg: float, reynolds: float = 1.0e6) -> SolverResult:
+def solve(
+    airfoil: Airfoil,
+    alpha_deg: float,
+    reynolds: float = 1.0e6,
+    *,
+    with_field: bool = False,
+) -> SolverResult:
     """Solve one section at one flow condition.
 
     Returns a result whose ``status`` says whether the viscous march succeeded. A result that is
     not ``ok`` carries ``nan`` for the drag so a failed case can never be mistaken for a
     converged one.
+
+    ``with_field`` additionally samples the velocity field on the schema grid, which the dataset
+    pipeline needs for the proper orthogonal decomposition. It roughly triples the cost of a
+    solve, so it is off by default.
     """
     panel = solve_inviscid(airfoil, alpha_deg)
 
@@ -169,4 +182,5 @@ def solve(airfoil: Airfoil, alpha_deg: float, reynolds: float = 1.0e6) -> Solver
         panel=panel,
         upper=upper_bl,
         lower=lower_bl,
+        field=sample_field(airfoil, panel, alpha_deg) if with_field else None,
     )
