@@ -13,7 +13,7 @@
   --color-line: #22303d;
   --color-text: #dfe7ef;
   --color-muted: #8b9bab;
-  --color-faint: #5a6977;
+  --color-faint: #738698;
   --color-accent: #8ab4f8;
   --color-warn: #e0a458;
 
@@ -52,4 +52,39 @@ body {
 
 input[type='range'] {
   accent-color: var(--color-accent);
+  /* The track needs 3:1 against its surroundings to be identifiable (WCAG 1.4.11); the structural
+     line colour is deliberately dimmer than that, so the track gets the text-grade grey. */
+  background: var(--color-faint);
+}
+
+/*
+ * Focus is shown only to keyboard users, and it is shown on everything: the shell has no custom
+ * controls, so one rule covers every button, slider, link and disclosure triangle. The offset keeps
+ * the ring off the control's own border, which is the same grey family.
+ */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Only where the browser does not already do this for us. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/*
+ * Reduced motion is honoured in two places. Here, for the chrome: no colour or layout transitions.
+ * In the scene, by pausing the particle advection and showing streamlines instead -- a still
+ * picture of the same field rather than a frozen cloud of dots, which would say nothing.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

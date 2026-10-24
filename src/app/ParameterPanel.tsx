@@ -4,6 +4,7 @@ import { sectionMetrics } from '../geometry/cst'
 import { PRESETS } from '../geometry/presets'
 import { TRAINED_ALPHA_RANGE, TRAINED_BOUNDS } from '../geometry/shapeOps'
 import { useAppStore } from '../state/store'
+import { usePrefersReducedMotion } from './useReducedMotion'
 
 interface SliderProps {
   readonly label: string
@@ -21,7 +22,7 @@ function Slider({ label, value, min, max, step = 0.001, unit = '', onChange }: S
       <span className="w-20 shrink-0 text-muted">{label}</span>
       <input
         type="range"
-        className="h-1 min-w-0 flex-1 cursor-pointer appearance-none rounded bg-line"
+        className="h-1 min-w-0 flex-1 cursor-pointer appearance-none rounded"
         min={min}
         max={max}
         step={step}
@@ -73,6 +74,9 @@ export function ParameterPanel() {
   const setTier = useAppStore((state) => state.setTier)
   const view = useAppStore((state) => state.view)
   const setView = useAppStore((state) => state.setView)
+  const motion = useAppStore((state) => state.motion)
+  const setMotion = useAppStore((state) => state.setMotion)
+  const reduced = usePrefersReducedMotion()
 
   const metrics = useMemo(() => sectionMetrics(section.upper, section.lower), [section])
 
@@ -226,6 +230,28 @@ export function ParameterPanel() {
         <p className="mt-1 text-xs text-faint">
           Particle count. <span className="tabular">auto</span> picks from what the GPU reports.
         </p>
+
+        {reduced && (
+          <div
+            className="mt-2 rounded border border-line bg-base px-2.5 py-2 text-xs"
+            data-testid="reduced-motion-note"
+          >
+            <p className="text-muted">
+              {motion === 'system'
+                ? 'Your system asks for reduced motion, so the particles are paused and the same field is drawn as streamlines.'
+                : 'Particles are animating despite your reduced-motion setting.'}
+            </p>
+            <button
+              type="button"
+              className="mt-1.5 rounded border border-line px-2 py-1 text-muted hover:border-faint hover:text-text"
+              onClick={() => {
+                setMotion(motion === 'system' ? 'always' : 'system')
+              }}
+            >
+              {motion === 'system' ? 'Animate anyway' : 'Pause the particles'}
+            </button>
+          </div>
+        )}
       </section>
 
       <section>

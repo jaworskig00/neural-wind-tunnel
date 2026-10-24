@@ -34,6 +34,14 @@ function clampWeight(
 
 export type ViewMode = 'particles' | 'streamlines' | 'both' | 'surface'
 export type TierChoice = 'auto' | 'high' | 'mid' | 'low'
+/**
+ * Whether the particles are allowed to animate.
+ *
+ * `system` follows `prefers-reduced-motion`; `always` is the explicit override for someone who has
+ * the setting on for the rest of their desktop but wants to see this. Deliberately not part of the
+ * URL state: a shared link should not impose motion on whoever opens it.
+ */
+export type MotionChoice = 'system' | 'always'
 export type { ColormapName as Colormap } from '../scene/pressureScale'
 
 export interface AppState {
@@ -46,6 +54,7 @@ export interface AppState {
   /** Trail exposure. Tone-mapped, so this is an exposure stop rather than a linear gain. */
   readonly trailIntensity: number
   readonly tier: TierChoice
+  readonly motion: MotionChoice
 
   setUpperWeight: (index: number, value: number) => void
   setLowerWeight: (index: number, value: number) => void
@@ -59,6 +68,7 @@ export interface AppState {
   setColormap: (colormap: ColormapName) => void
   setTrailIntensity: (intensity: number) => void
   setTier: (tier: TierChoice) => void
+  setMotion: (motion: MotionChoice) => void
   reset: () => void
 }
 
@@ -72,6 +82,7 @@ export const useAppStore = create<AppState>((set) => ({
   colormap: 'coolwarm',
   trailIntensity: 0.5,
   tier: 'auto',
+  motion: 'system',
 
   setUpperWeight: (index, value) => {
     set((state) => ({
@@ -139,6 +150,10 @@ export const useAppStore = create<AppState>((set) => ({
     set({ trailIntensity: clamp(trailIntensity, 0, 3) })
   },
 
+  setMotion: (motion) => {
+    set({ motion })
+  },
+
   setTier: (tier) => {
     set({ tier })
   },
@@ -155,6 +170,7 @@ export const useAppStore = create<AppState>((set) => ({
       colormap: 'coolwarm',
       trailIntensity: 0.5,
       tier: 'auto',
+      motion: 'system',
     })
   },
 }))

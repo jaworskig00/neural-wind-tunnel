@@ -88,14 +88,14 @@ function Panel({ title, xLabel, points, reference, x, y, current, width, height 
         ))}
         {xScale?.ticks(4).map((value) => (
           <g key={`x-${value}`} transform={`translate(${xScale(value)},${inner.height})`}>
-            <line y2={3} stroke="#5a6977" />
+            <line y2={3} stroke="#738698" />
             <text y={12} textAnchor="middle" fontSize={8} fill="#8b9bab">
               {value}
             </text>
           </g>
         ))}
 
-        {referencePath && <path d={referencePath} fill="none" stroke="#5a6977" strokeWidth={2} />}
+        {referencePath && <path d={referencePath} fill="none" stroke="#738698" strokeWidth={2} />}
         {path && <path d={path} fill="none" stroke="#8ab4f8" strokeWidth={1.4} />}
 
         {/* Checking `xScale` narrows the whole memo result, so `yScale` needs no test. */}
@@ -106,7 +106,7 @@ function Panel({ title, xLabel, points, reference, x, y, current, width, height 
         <text x={0} y={-4} fontSize={8} fill="#8b9bab">
           {title}
         </text>
-        <text x={inner.width} y={inner.height + 12} textAnchor="end" fontSize={8} fill="#5a6977">
+        <text x={inner.width} y={inner.height + 12} textAnchor="end" fontSize={8} fill="#738698">
           {xLabel}
         </text>
       </g>

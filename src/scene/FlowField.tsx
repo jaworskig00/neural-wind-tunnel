@@ -17,6 +17,7 @@ import {
 } from '../rom/capabilities'
 import { type PodAtlas, loadPodAtlas } from '../rom/podAtlas'
 import { FieldReconstruction } from '../rom/reconstruction'
+import { usePrefersReducedMotion } from '../app/useReducedMotion'
 import { useAppStore } from '../state/store'
 
 /**
@@ -47,6 +48,17 @@ export function FlowField({ prediction, capabilities, onTier }: FlowFieldProps) 
   const view = useAppStore((state) => state.view)
   const trailIntensity = useAppStore((state) => state.trailIntensity)
   const tierChoice = useAppStore((state) => state.tier)
+  const motion = useAppStore((state) => state.motion)
+  const reduced = usePrefersReducedMotion()
+
+  /**
+   * Whether the particles may move.
+   *
+   * Reduced motion is a request from the person at the keyboard, not a hint, so it wins unless they
+   * have said otherwise in the panel. A paused particle cloud is noise rather than information, so
+   * the streamlines come up in its place: the same field, standing still.
+   */
+  const animate = motion === 'always' || !reduced
 
   const [atlas, setAtlas] = useState<PodAtlas | null>(null)
   const startingTier = useMemo(
@@ -195,7 +207,7 @@ export function FlowField({ prediction, capabilities, onTier }: FlowFieldProps) 
     current.particles.points.rotation.z = (-alphaDeg * Math.PI) / 180
     renderer.render(scene, camera)
 
-    if (view === 'surface' || view === 'streamlines') return
+    if (!animate || view === 'surface' || view === 'streamlines') return
     current.particles.step(renderer, delta, current.field.texture, current.mask.texture)
     current.trails.accumulate(renderer, camera, delta)
     current.trails.draw(renderer)
@@ -214,7 +226,8 @@ export function FlowField({ prediction, capabilities, onTier }: FlowFieldProps) 
     }
   }, 1)
 
-  const showStreamlines = view === 'streamlines' || view === 'both'
+  const showStreamlines =
+    view === 'streamlines' || view === 'both' || (!animate && view === 'particles')
 
   return showStreamlines ? (
     <StreamlineRibbons

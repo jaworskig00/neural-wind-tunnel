@@ -68,6 +68,11 @@ export function Viewport({ prediction, onTier }: ViewportProps) {
       // deliverable. The cost is one buffer copy per frame, which is immaterial here.
       gl={{ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true }}
       data-testid="viewport"
+      // The canvas is the result, so it gets a description rather than being left as an unlabelled
+      // graphic. The numbers it visualises are also in the header and the charts, which is where a
+      // screen reader user actually reads them.
+      role="img"
+      aria-label="Three-dimensional view of the section with the predicted flow field. The same numbers are in the coefficient header and the charts."
     >
       <color attach="background" args={['#080c11']} />
       <hemisphereLight args={['#dfe7ef', '#0b1118', 0.75]} />

@@ -676,3 +676,24 @@ A whole new geometry per prediction fixes it.
 — `mean + sum(a_i * phi_i)` — not a decorative curve family drawn to look like flow.
 
 **Commit.** see `git log`
+
+## T7.4 — accessibility
+
+**Done.** `docs/accessibility.md` records what holds and what does not. Four end-to-end tests guard
+it: arrow keys, Home and End on the sliders, a visible focus ring, named charts, and reduced motion.
+
+**One real failure found.** `--color-faint` was `#5a6977`, which is 3.4:1 on the panel background —
+below AA, and it was carrying captions, units and the status line at 0.65–0.75 rem. Now `#738698`,
+4.5:1 on the surface it sits on. The slider track moved from `line` to `faint` for the same reason:
+a control you have to find needs 3:1, and `line` is 1.3:1 because it draws grid rules.
+
+**Reduced motion, honestly.** Pausing the particles and leaving them on screen would be a frozen
+cloud of dots that says nothing. The scene switches to streamlines instead — the same reconstructed
+field, standing still — and the panel says so and offers to animate anyway. The override stays out
+of the URL state: a shared link should not impose motion on whoever opens it.
+
+**Left undone, on purpose.** No keyboard camera control: `OrbitControls` is pointer-driven, and
+every number the view shows is also in the header and the charts. No live region for the
+coefficients; it would talk continuously through a slider drag.
+
+**Commit.** see `git log`

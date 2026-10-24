@@ -147,7 +147,7 @@ export function CpChart({ cp, reference = null, width = 320, height = 200 }: CpC
             key={`x-${value}`}
             transform={`translate(${xScale(value)},${height - MARGIN.top - MARGIN.bottom})`}
           >
-            <line y2={4} stroke="#5a6977" />
+            <line y2={4} stroke="#738698" />
             <text y={14} textAnchor="middle" fontSize={9} fill="#8b9bab">
               {value}
             </text>
@@ -160,12 +160,12 @@ export function CpChart({ cp, reference = null, width = 320, height = 200 }: CpC
           x2={width - MARGIN.left - MARGIN.right}
           y1={yScale(0)}
           y2={yScale(0)}
-          stroke="#5a6977"
+          stroke="#738698"
           strokeDasharray="2 3"
         />
 
-        {referenceUpper && <path d={referenceUpper} fill="none" stroke="#5a6977" strokeWidth={2} />}
-        {referenceLower && <path d={referenceLower} fill="none" stroke="#5a6977" strokeWidth={2} />}
+        {referenceUpper && <path d={referenceUpper} fill="none" stroke="#738698" strokeWidth={2} />}
+        {referenceLower && <path d={referenceLower} fill="none" stroke="#738698" strokeWidth={2} />}
         {upperPath && <path d={upperPath} fill="none" stroke="#8ab4f8" strokeWidth={1.5} />}
         {lowerPath && (
           <path
@@ -193,7 +193,7 @@ export function CpChart({ cp, reference = null, width = 320, height = 200 }: CpC
           </g>
         )}
 
-        <text x={4} y={10} fontSize={9} fill="#5a6977">
+        <text x={4} y={10} fontSize={9} fill="#738698">
           −Cp
         </text>
         <text
@@ -201,7 +201,7 @@ export function CpChart({ cp, reference = null, width = 320, height = 200 }: CpC
           y={height - MARGIN.top - MARGIN.bottom - 6}
           textAnchor="end"
           fontSize={9}
-          fill="#5a6977"
+          fill="#738698"
         >
           x/c
         </text>
@@ -219,7 +219,7 @@ export function CpChart({ cp, reference = null, width = 320, height = 200 }: CpC
               upper {readout.upper.toFixed(3)}
             </tspan>
             {readout.referenceUpper !== null && (
-              <tspan fill="#5a6977" dx={4}>
+              <tspan fill="#738698" dx={4}>
                 / {readout.referenceUpper.toFixed(3)}
               </tspan>
             )}
@@ -228,7 +228,7 @@ export function CpChart({ cp, reference = null, width = 320, height = 200 }: CpC
             <tspan dx={28} />
             <tspan fill="#8ab4f8">lower {readout.lower.toFixed(3)}</tspan>
             {readout.referenceLower !== null && (
-              <tspan fill="#5a6977" dx={4}>
+              <tspan fill="#738698" dx={4}>
                 / {readout.referenceLower.toFixed(3)}
               </tspan>
             )}
