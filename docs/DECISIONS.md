@@ -399,3 +399,36 @@ the few grid cells adjacent to the surface. `docs/accuracy.md` must repeat this,
 honesty section must not quote the 98.26 % figure without the regional split beside it. If a future
 version wants a genuinely better near-surface field, the fix is a body-fitted or
 signed-distance-aware representation, not more modes.
+
+---
+
+## ADR-018 — Pressure stations stop at 98 % of chord, because the trailing-edge singularity reached the dataset
+
+**Status.** accepted
+
+**Context.** The first published dataset carried pressure coefficients up to 7e15 in the
+`cp_063` and `cp_127` columns — the last station on each surface — on about 2 % of rows, with a
+further 5 % beyond any physical value. The cause is the same one that forced the boundary-layer
+cut-off in ADR-015: at a sharp trailing edge the inviscid edge velocity collapses into the rear
+stagnation point and the panel solution there is badly conditioned. The station interpolation read
+straight across those control points and published whatever came out.
+
+This is the most dangerous class of error in this project. The columns looked like data, they would
+have trained a model to predict 1e15, and nothing would have failed loudly.
+
+**Decision.** Drop control points past 98 % of chord before interpolating onto the station grid —
+the same cut-off, for the same reason, as the viscous march. The interpolation then clamps, holding
+the last trustworthy value across the final two per cent of chord instead of extrapolating a
+singularity. Two regression tests assert that no sampled section produces a pressure coefficient
+above stagnation or a suction peak beyond -25, and a third asserts the last stations are held rather
+than extrapolated.
+
+**Consequences.** The worst pressure coefficient across 200 sampled sections at four incidences is
+now -22.3, a real suction peak on a sharp nose at ten degrees. The published dataset was regenerated
+and the `dataset-v1` Release assets replaced; the schema is unchanged, so the version is not bumped,
+and `CHANGELOG.md` records the replacement.
+
+The cost is real: the pressure recovery over the last two per cent of chord is flattened, so the
+trailing-edge pressure in both the dataset and the app is held rather than resolved. Resolving it
+properly needs viscous-inviscid coupling, which is out of scope. This limit belongs in
+`docs/accuracy.md` and in the README's honesty section alongside the others.

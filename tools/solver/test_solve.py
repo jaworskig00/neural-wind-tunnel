@@ -90,3 +90,41 @@ class TestSeparationInducedTransition:
         result = solve(naca4("0012", panel_count=200), 5.0)
         assert result.upper is not None
         assert result.upper.separation_induced_transition
+
+
+class TestPressureIsPhysical:
+    """Regression guard for ADR-018.
+
+    The reported stations originally interpolated across the panel control points nearest the sharp
+    trailing edge, where the inviscid solution is badly conditioned. On a few per cent of sampled
+    sections that produced pressure coefficients of 1e15 in the published dataset — plausible-looking
+    columns full of nonsense, which is the worst kind of error this project can ship.
+    """
+
+    @staticmethod
+    def _sections():
+        from tools.dataset.sample import generate_shapes
+
+        shapes, _ = generate_shapes(40)
+        return [shape.airfoil for shape in shapes]
+
+    def test_pressure_never_exceeds_stagnation(self) -> None:
+        for airfoil in self._sections():
+            for alpha in (-6.0, 0.0, 5.0, 10.0):
+                stations = solve(airfoil, alpha).cp_stations
+                assert stations.max() <= 1.0 + 1e-6, "Cp cannot exceed the stagnation value"
+
+    def test_suction_stays_within_a_physical_bound(self) -> None:
+        # A suction peak of -25 already means five times the freestream speed locally. Anything
+        # beyond that is the trailing-edge singularity leaking back in.
+        for airfoil in self._sections():
+            for alpha in (-6.0, 0.0, 5.0, 10.0):
+                stations = solve(airfoil, alpha).cp_stations
+                assert stations.min() > -25.0, "suction peak is non-physical"
+
+    def test_trailing_edge_stations_are_held_not_extrapolated(self) -> None:
+        # The last two per cent of chord takes the value at the cut-off, so the final stations on
+        # each surface sit close together rather than diverging.
+        result = solve(naca4("2412", panel_count=200), 4.0)
+        assert abs(result.cp_upper[-1] - result.cp_upper[-2]) < 0.1
+        assert abs(result.cp_lower[-1] - result.cp_lower[-2]) < 0.1

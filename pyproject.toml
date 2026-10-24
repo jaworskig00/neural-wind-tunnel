@@ -13,8 +13,11 @@ dependencies = [
 [dependency-groups]
 dev = [
     "matplotlib>=3.11.2",
+    "onnx>=1.23.2",
+    "onnxruntime>=1.31.0",
     "pytest>=8.4",
     "ruff>=0.14",
+    "torch>=2.14.1",
 ]
 
 [tool.uv]

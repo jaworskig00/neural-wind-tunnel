@@ -12,7 +12,12 @@ from enum import StrEnum
 import numpy as np
 from numpy.typing import NDArray
 
-from tools.solver.boundary_layer import SurfaceBoundaryLayer, SurfaceStatus, march_surface
+from tools.solver.boundary_layer import (
+    TRAILING_EDGE_CUTOFF_X,
+    SurfaceBoundaryLayer,
+    SurfaceStatus,
+    march_surface,
+)
 from tools.solver.field import VelocityField, sample_field
 from tools.solver.geometry import Airfoil
 from tools.solver.panel import PanelSolution, solve_inviscid
@@ -71,13 +76,24 @@ def _split_geometric_surfaces(panel: PanelSolution) -> tuple[Array, Array, Array
 
     The panel solver works in the order trailing edge, lower surface, nose, upper surface,
     trailing edge, so the nose index splits the two.
+
+    Control points past :data:`TRAILING_EDGE_CUTOFF_X` are dropped. At a sharp trailing edge the
+    inviscid edge velocity collapses into the rear stagnation point and the panel solution there is
+    badly conditioned -- on a few per cent of sampled sections it produces a pressure coefficient of
+    1e15, which is not large, it is meaningless. The boundary layer already stops at the same
+    station for the same reason (ADR-015); dropping these points means the interpolation in
+    :func:`solve` clamps, holding the last trustworthy value across the final two per cent of chord
+    rather than extrapolating a singularity into the dataset. See ADR-018.
     """
     nose = int(np.argmin(panel.x_control))
     lower_x = panel.x_control[: nose + 1][::-1]
     lower_cp = panel.cp[: nose + 1][::-1]
     upper_x = panel.x_control[nose:]
     upper_cp = panel.cp[nose:]
-    return lower_x, lower_cp, upper_x, upper_cp
+
+    lower_keep = lower_x <= TRAILING_EDGE_CUTOFF_X
+    upper_keep = upper_x <= TRAILING_EDGE_CUTOFF_X
+    return lower_x[lower_keep], lower_cp[lower_keep], upper_x[upper_keep], upper_cp[upper_keep]
 
 
 def _branch_from_stagnation(

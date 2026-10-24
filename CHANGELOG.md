@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Pressure stations no longer interpolate across the singular control points at a sharp trailing
+  edge. The first `dataset-v1` assets carried pressure coefficients up to 7e15 in the last station
+  of each surface on about 2 % of rows; the dataset was regenerated and the Release assets replaced.
+  See ADR-018.
+
 ### Changed
 
 - `docs/DATASET-SCHEMA.md`: the sampled incidence range is now -6 to +10 degrees rather than
