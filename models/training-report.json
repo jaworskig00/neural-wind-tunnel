@@ -1,0 +1,12 @@
+{
+  "epochs_run": 400,
+  "best_epoch": 393,
+  "train_loss": 0.0015479745299397211,
+  "validation_loss": 0.004172439221292734,
+  "test_loss": 0.0055830832570791245,
+  "parameters": 177059,
+  "seconds": 94.29213520803023,
+  "seed": 20261024,
+  "batch_size": 1024,
+  "learning_rate": 0.001
+}

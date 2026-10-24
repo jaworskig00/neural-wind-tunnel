@@ -467,3 +467,50 @@ left as mean and standard deviation rather than something percentile-based: with
 the remaining tail is about ten times the typical magnitude, not a hundred, and robust scaling would
 be a second mechanism solving a problem the gate already solved. If the accuracy report shows
 particular pressure stations fitting badly, that is the place to revisit it.
+
+---
+
+## ADR-020 — Drag and moment get the same trailing-edge treatment as pressure, and the build asserts what it publishes
+
+**Status.** accepted
+
+**Context.** With the pressure columns fixed (ADR-018) and the non-physical suction peaks gated
+(ADR-019), training still produced nonsense for two of the three force coefficients: a held-out drag
+prediction range of -29 144 to 108 549, and a normalisation scale for drag of 1.2e7. The model was
+fine — lift came out with a mean absolute error of 0.0062 — and the targets were not.
+
+Two separate defects, both of the same shape as ADR-018: a plausible-looking column full of
+nonsense.
+
+* **The moment inherited the trailing-edge singularity.** ADR-018 excluded the singular control
+  points from the *reported pressure stations* but not from the force and moment integrals, and the
+  moment amplifies them because the lever arm at the trailing edge is three quarters of a chord.
+  Result: 360 converged rows, 0.87 % of them, with a quarter-chord moment outside ±0.3, the worst at
+  -11 770, against a 99.99th percentile of 0.103.
+* **The viscous march could diverge while reporting success.** Forward Euler on the momentum
+  equation can run away before the shape factor reaches the separation threshold. Two rows had a
+  drag above 0.05 and one reached 2.2e9, against a 99.99th percentile of 0.0296.
+
+**Decision.** Three changes.
+
+1. The force and moment integrals use the same 98 %-of-chord cut-off as the pressure stations and
+   the viscous march. One cut-off, one reason, three places. On well-behaved sections it costs
+   almost nothing: NACA 2412's quarter-chord moment moves from -0.0553 to -0.0552 and NACA 4412's
+   from -0.1104 to -0.1097, both still matching their published values as before.
+2. The march declares itself not converged when the momentum thickness exceeds a twentieth of the
+   chord. A boundary layer that thick at Reynolds one million is not attached flow by any reading,
+   so it is a failure rather than a number.
+3. `tools.dataset.build` asserts that every converged row it is about to publish has lift within
+   ±3, drag between 0.001 and 0.05, a quarter-chord moment within ±0.5 and no pressure above
+   stagnation — and raises rather than writing the file if not.
+
+That third point is the one that matters most. Every data defect this project has shipped looked
+exactly like data, and each was found only because something downstream behaved absurdly. The
+assertion turns the next one into a failed build instead of a trained model. Its bounds are not
+gates: the solver's own guards decide what converges, and a row outside these bounds means a guard
+has a hole, which is to be fixed rather than accommodated by widening the bound.
+
+**Consequences.** The dataset is regenerated and the `dataset-v1` Release assets replaced again.
+The schema is unchanged, so the version is not bumped. The moment is now integrated over 98 % of the
+chord rather than all of it, which is a documented approximation belonging with the others in
+`docs/solver-validation.md`.

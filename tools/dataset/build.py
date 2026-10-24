@@ -113,6 +113,39 @@ def gate_non_physical_pressure(frame: pd.DataFrame) -> int:
     return int(offending.sum())
 
 
+#: Bounds the published data is checked against before anything is written.
+#:
+#: These are not gates -- the solver's own guards decide what converges. They are an assertion that
+#: those guards worked, because every data defect this project has shipped so far looked like data:
+#: a pressure coefficient of 7e15, a drag of 2.2e9, a quarter-chord moment of -11 770. A published
+#: row outside these bounds means a guard has a hole, and the build should stop rather than release.
+PUBLISHED_BOUNDS = {
+    "cl": (-3.0, 3.0),
+    "cd": (0.001, 0.05),
+    "cm_quarter": (-0.5, 0.5),
+}
+
+
+def assert_physically_plausible(frame: pd.DataFrame) -> None:
+    """Refuse to publish converged rows that cannot be right."""
+    converged = frame[frame["solver_status"] == "ok"]
+    for column, (low, high) in PUBLISHED_BOUNDS.items():
+        values = converged[column]
+        offending = (values < low) | (values > high)
+        if offending.any():
+            worst = values[offending].abs().max()
+            raise RuntimeError(
+                f"{int(offending.sum())} converged rows have {column} outside "
+                f"[{low}, {high}], worst magnitude {worst:.4g}. A solver guard has a hole; "
+                f"fix it rather than widening this bound."
+            )
+
+    pressure_columns = [column for column in frame.columns if column.startswith("cp_")]
+    pressure = converged[pressure_columns].to_numpy()
+    if pressure.max() > 1.0 + 1e-6:
+        raise RuntimeError(f"pressure exceeds stagnation, maximum {pressure.max():.4g}")
+
+
 def checksum(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -279,6 +312,7 @@ def main() -> int:
     frame = load_tables(args.output)
     frame = recompute_geometry(frame)
     gated = gate_non_physical_pressure(frame)
+    assert_physically_plausible(frame)
     print(
         f"  {len(frame)} rows, {frame['shape_id'].nunique()} shapes, "
         f"{gated} re-marked as geometry_invalid",

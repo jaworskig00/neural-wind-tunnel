@@ -30,8 +30,18 @@ DEFAULT_MODELS = Path("models")
 #: first sensible choice already fits well. Any change here is recorded in docs/accuracy.md.
 DEFAULT_EPOCHS = 400
 DEFAULT_BATCH = 1024
-DEFAULT_LEARNING_RATE = 2.0e-3
-PATIENCE = 40
+#: Measured, not assumed: 2e-3 left the validation curve visibly noisy, 5e-4 under-fitted.
+DEFAULT_LEARNING_RATE = 1.0e-3
+
+#: Early stopping is a safety net, not the stopping rule.
+#:
+#: The cosine schedule is what actually controls the run: it anneals the learning rate to near zero
+#: over the full epoch budget, and the last epochs are where the model settles. A tight patience cut
+#: the first attempt off at epoch 112 with the learning rate still near its peak, and "best
+#: validation" then picked a lucky dip — test loss came out at twice the validation figure, which is
+#: the signature of selecting on noise rather than on fit. With the schedule allowed to finish, the
+#: two agree.
+PATIENCE = 400
 
 
 @dataclass
@@ -58,20 +68,77 @@ def _tensors(split: Split, device: torch.device) -> tuple[torch.Tensor, torch.Te
     )
 
 
+#: Huber transition point, in units of normalised output standard deviations.
+#:
+#: The targets are heavy-tailed: ten validation rows out of 6720 carried a quarter of a squared-error
+#: loss, and training under squared error drove the model to keep improving on the bulk while getting
+#: steadily *worse* on those extremes -- untrimmed validation loss tripled while the trimmed figure
+#: fell. That is the wrong trade for an app that lets a visitor build an extreme section. Huber is
+#: quadratic within one standard deviation and linear beyond, so an outlier still pulls the fit
+#: toward itself but cannot dominate the gradient. See ADR-020.
+HUBER_DELTA = 1.0
+
+
+def element_losses(predicted: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    """Per-element Huber loss."""
+    residual = predicted - target
+    magnitude = residual.abs()
+    return torch.where(
+        magnitude <= HUBER_DELTA,
+        0.5 * residual**2,
+        HUBER_DELTA * (magnitude - 0.5 * HUBER_DELTA),
+    )
+
+
 def weighted_loss(
     predicted: torch.Tensor,
     target: torch.Tensor,
     mask: torch.Tensor,
     weights: torch.Tensor,
 ) -> torch.Tensor:
-    """Masked, group-weighted mean squared error in normalised output space.
+    """Masked, group-weighted Huber loss in normalised output space.
 
     Dividing by the mask's own weighted sum rather than by the element count keeps the drag term's
     contribution independent of how many rows in a batch happen to have converged.
     """
-    squared = (predicted - target) ** 2 * mask * weights
+    weighted = element_losses(predicted, target) * mask * weights
     denominator = (mask * weights).sum().clamp_min(1e-12)
-    return squared.sum() / denominator
+    return weighted.sum() / denominator
+
+
+#: Fraction of the worst rows excluded when selecting the best epoch.
+#:
+#: Ten rows out of 6720 carry a quarter of the validation loss: the median row scores 0.0064 and the
+#: worst 11.6. Those are extreme sections whose fit swings from epoch to epoch, and letting them
+#: decide which weights to keep is selecting on noise -- the first run picked a lucky dip at epoch 72
+#: and produced a test loss twice its validation figure. Selection therefore uses a trimmed mean. The
+#: untrimmed mean is still reported, so nothing is hidden by the trimming.
+SELECTION_TRIM = 0.01
+
+
+def split_losses(
+    model: Surrogate,
+    split: Split,
+    normalisation_tensors: tuple[torch.Tensor, torch.Tensor],
+    weights: torch.Tensor,
+    device: torch.device,
+) -> tuple[float, float]:
+    """Mean and trimmed-mean loss over a split, in the normalised space the training loss uses."""
+    output_mean, output_scale = normalisation_tensors
+    inputs, outputs, mask = _tensors(split, device)
+    model.eval()
+    with torch.no_grad():
+        predicted = model(inputs)
+        normalised_predicted = (predicted - output_mean) / output_scale
+        normalised_target = (outputs - output_mean) / output_scale
+
+        weighted = element_losses(normalised_predicted, normalised_target) * mask * weights
+        denominator = (mask * weights).sum(dim=1).clamp_min(1e-12)
+        per_row = weighted.sum(dim=1) / denominator
+
+        keep = max(1, int(per_row.numel() * (1.0 - SELECTION_TRIM)))
+        trimmed = torch.sort(per_row).values[:keep]
+        return float(per_row.mean()), float(trimmed.mean())
 
 
 def evaluate(
@@ -81,15 +148,8 @@ def evaluate(
     weights: torch.Tensor,
     device: torch.device,
 ) -> float:
-    """Validation or test loss, in the same normalised space the training loss uses."""
-    output_mean, output_scale = normalisation_tensors
-    inputs, outputs, mask = _tensors(split, device)
-    model.eval()
-    with torch.no_grad():
-        predicted = model(inputs)
-        normalised_predicted = (predicted - output_mean) / output_scale
-        normalised_target = (outputs - output_mean) / output_scale
-        return float(weighted_loss(normalised_predicted, normalised_target, mask, weights))
+    """Plain mean loss over a split."""
+    return split_losses(model, split, normalisation_tensors, weights, device)[0]
 
 
 def train(
@@ -118,6 +178,7 @@ def train(
     schedule = torch.optim.lr_scheduler.CosineAnnealingLR(optimiser, T_max=epochs)
     generator = torch.Generator().manual_seed(seed)
 
+    best_selection = float("inf")
     best_validation = float("inf")
     best_state = {key: value.clone() for key, value in model.state_dict().items()}
     best_epoch = 0
@@ -136,15 +197,16 @@ def train(
             loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimiser.step()
-            epoch_loss += float(loss)
+            epoch_loss += float(loss.detach())
             batches += 1
         schedule.step()
         train_loss = epoch_loss / max(batches, 1)
 
-        validation_loss = evaluate(
+        validation_loss, selection_loss = split_losses(
             model, data.validation, (output_mean, output_scale), weights, device
         )
-        if validation_loss < best_validation:
+        if selection_loss < best_selection:
+            best_selection = selection_loss
             best_validation = validation_loss
             best_state = {key: value.clone() for key, value in model.state_dict().items()}
             best_epoch = epoch
@@ -152,7 +214,7 @@ def train(
         if verbose and (epoch % 20 == 0 or epoch == 1):
             print(
                 f"  epoch {epoch:4d}  train {train_loss:.5f}  validation {validation_loss:.5f}"
-                f"  best {best_validation:.5f} at {best_epoch}",
+                f"  trimmed {selection_loss:.5f}  best {best_selection:.5f} at {best_epoch}",
                 flush=True,
             )
 

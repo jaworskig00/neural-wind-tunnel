@@ -57,6 +57,15 @@ MICHEL_RE_MIN = 1.0e5
 #: contributes a fraction of a percent of the drag.
 TRAILING_EDGE_CUTOFF_X = 0.98
 
+#: Momentum thickness beyond which the march is declared divergent.
+#:
+#: Forward Euler on the momentum equation can run away before the shape factor reaches the
+#: separation threshold, and the result is a Squire-Young drag of any magnitude at all -- one
+#: sampled row reached 2.2e9 while still being reported as converged. A momentum thickness above a
+#: twentieth of the chord at Reynolds one million is not attached flow by any reading, so it is
+#: treated as a failed march rather than a number. See ADR-020.
+MAX_MOMENTUM_THICKNESS = 0.05
+
 #: Laminar separation is not looked for inside this arc length. The first panels after the
 #: stagnation point have unreliable velocity gradients on a cosine-clustered grid, and Thwaites'
 #: similarity start is only valid a little downstream.
@@ -286,7 +295,12 @@ def march_surface(
 
         current_theta += dtheta * ds
         current_h1 += dh1 * ds
-        if current_theta <= 0.0 or not np.isfinite(current_theta) or not np.isfinite(current_h1):
+        if (
+            current_theta <= 0.0
+            or current_theta > MAX_MOMENTUM_THICKNESS
+            or not np.isfinite(current_theta)
+            or not np.isfinite(current_h1)
+        ):
             status = SurfaceStatus.NOT_CONVERGED
             break
 

@@ -36,6 +36,17 @@ Array = NDArray[np.float64]
 #: of a broken geometry, not something to work around silently.
 MIN_PANEL_LENGTH = 1e-10
 
+#: Chordwise station past which panels are excluded from the force and moment integrals.
+#:
+#: The same cut-off, for the same reason, as the pressure stations in `tools.solver.solve` and the
+#: viscous march in `tools.solver.boundary_layer`: at a sharp trailing edge the inviscid solution is
+#: badly conditioned, and the moment integral amplifies it because the lever arm there is three
+#: quarters of a chord. Left in, the quarter-chord moment reached -11 770 on 0.87 % of sampled rows.
+#: The omitted panels carry little real load on an attached section -- NACA 2412 and 4412 still match
+#: their published moments after the change -- and the alternative is publishing nonsense. See
+#: ADR-020.
+FORCE_INTEGRATION_CUTOFF_X = 0.98
+
 
 @dataclass(frozen=True)
 class PanelSolution:
@@ -174,11 +185,12 @@ def solve_inviscid(airfoil: Airfoil, alpha_deg: float) -> PanelSolution:
     cl = 2.0 * circulation
 
     # Pressure integration. (-sin theta, cos theta) is the outward normal in this ordering, so
-    # the force coefficient is -sum(cp * n * ds).
+    # the force coefficient is -sum(cp * n * ds). Panels inside the trailing-edge cut-off only.
+    integrate = control[:, 0] <= FORCE_INTEGRATION_CUTOFF_X
     normal_x = -np.sin(theta)
     normal_y = np.cos(theta)
-    force_x = -float(np.sum(cp * normal_x * length))
-    force_y = -float(np.sum(cp * normal_y * length))
+    force_x = -float(np.sum((cp * normal_x * length)[integrate]))
+    force_y = -float(np.sum((cp * normal_y * length)[integrate]))
     cl_pressure = force_y * np.cos(alpha) - force_x * np.sin(alpha)
 
     # Moment about the quarter-chord point. The cross product gives the mathematically
@@ -186,7 +198,8 @@ def solve_inviscid(airfoil: Airfoil, alpha_deg: float) -> PanelSolution:
     # negated to match the aerodynamic convention of positive nose-up.
     lever_x = control[:, 0] - 0.25
     lever_y = control[:, 1]
-    cm_quarter = -float(np.sum(cp * (normal_x * lever_y - normal_y * lever_x) * length))
+    moment = cp * (normal_x * lever_y - normal_y * lever_x) * length
+    cm_quarter = -float(np.sum(moment[integrate]))
 
     return PanelSolution(
         alpha_deg=alpha_deg,
