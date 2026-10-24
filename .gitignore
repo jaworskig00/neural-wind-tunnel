@@ -42,3 +42,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# model artifacts placed by `pnpm models:sync`
+public/models/

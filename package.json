@@ -20,7 +20,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "simple-git-hooks",
-    "size": "size-limit"
+    "size": "size-limit",
+    "models:sync": "uv run python tools/sync_models.py"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

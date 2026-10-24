@@ -1,28 +1,40 @@
 import { Grid, OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import { useMemo } from 'react'
-import { DoubleSide } from 'three'
+import { useEffect, useMemo } from 'react'
 
+import type { Prediction } from '../ml/types'
 import { useAppStore } from '../state/store'
 import { buildAirfoilGeometry } from './airfoilGeometry'
+import { createPressureMaterial } from './pressureMaterial'
 
 /**
- * The section mesh. Rebuilt whenever the weights change; the geometry builder writes into
- * preallocated typed arrays so a slider drag stays inside the 16 ms budget.
+ * The section mesh, coloured by the predicted surface pressure.
  *
- * The pressure colormap material arrives in M5 and the particle field in M6. Until then this is a
- * plain lit surface, which is enough to prove the geometry pipeline end to end.
+ * Geometry is rebuilt whenever the weights change; the builder writes into preallocated typed arrays
+ * so a slider drag stays inside the 16 ms budget. The material is built once and its pressure
+ * texture is rewritten per prediction, which is 128 floats rather than a new vertex attribute.
  */
-function AirfoilMesh() {
+function AirfoilMesh({ prediction }: { readonly prediction: Prediction | null }) {
   const section = useAppStore((state) => state.section)
   const alphaDeg = useAppStore((state) => state.alphaDeg)
+  const colormap = useAppStore((state) => state.colormap)
+
   const geometry = useMemo(() => buildAirfoilGeometry(section), [section])
+  const pressure = useMemo(() => createPressureMaterial(colormap), [colormap])
+
+  useEffect(
+    () => () => {
+      pressure.dispose()
+    },
+    [pressure],
+  )
+  useEffect(() => {
+    if (prediction) pressure.update(prediction.cp)
+  }, [prediction, pressure])
 
   return (
     <group rotation={[0, 0, (-alphaDeg * Math.PI) / 180]} position={[-0.5, 0, 0]}>
-      <mesh geometry={geometry} castShadow>
-        <meshStandardMaterial color="#9fb3c8" metalness={0.1} roughness={0.55} side={DoubleSide} />
-      </mesh>
+      <mesh geometry={geometry} material={pressure.material} />
     </group>
   )
 }
@@ -32,7 +44,7 @@ function AirfoilMesh() {
  * of what the solver does. It is the right choice for the camera: the flow visualisation in M6
  * reads from a field aligned with the world x axis, so the freestream must stay put.
  */
-export function Viewport() {
+export function Viewport({ prediction }: { readonly prediction: Prediction | null }) {
   return (
     <Canvas
       // Close to side-on, lifted just enough to read as three-dimensional. An oblique default
@@ -51,7 +63,7 @@ export function Viewport() {
       <directionalLight position={[2, 3, 2]} intensity={1.6} />
       <directionalLight position={[-2, -1, -2]} intensity={0.35} color="#8ab4f8" />
 
-      <AirfoilMesh />
+      <AirfoilMesh prediction={prediction} />
 
       <Grid
         args={[8, 8]}
