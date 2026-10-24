@@ -1,0 +1,29 @@
+---
+description: Operating rules for the Neural Wind Tunnel repository
+alwaysApply: true
+---
+
+Follow `AGENTS.md` in the repository root. It is the full manual: commands, conventions, git
+workflow and the autonomous loop.
+
+Work through `docs/PLAN.md` in order, starting at the first unticked task. Do not skip ahead and
+do not widen a task into a refactor of its neighbours.
+
+After every task: run `pnpm lint typecheck test build` plus `pnpm test:e2e` for visual work and
+`uv run ruff check . && uv run pytest` for Python work, verify the task's acceptance criteria
+yourself, commit with a Conventional Commit message, push, tick the checkbox in `docs/PLAN.md`,
+and append an entry to `docs/PROGRESS.md`.
+
+Hard rules:
+
+- Commit messages contain no co-author trailers and no mention of the tool that wrote them.
+- Never commit secrets, datasets, model artifacts or binaries over a megabyte.
+- Never force-push and never rewrite pushed history.
+- The velocity field is always reconstructed from the model's predicted POD coefficients.
+  Procedural noise never substitutes for a solution.
+- Every accuracy or performance number in any document is measured, reproducible and honest,
+  including when a target was missed.
+- `docs/DATASET-SCHEMA.md` and `docs/URL-STATE.md` are contracts shared with a sister
+  repository. Changing one is deliberate, versioned and recorded in `CHANGELOG.md`.
+- Running unattended, never stop to ask. Choose a default, add an ADR to `docs/DECISIONS.md`,
+  note it in `docs/QUESTIONS.md`, continue.

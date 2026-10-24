@@ -1,0 +1,44 @@
+# node
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+
+# test / tooling output
+coverage/
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+*.tsbuildinfo
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.uv/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# generated data & models (published as GitHub Release assets, never committed)
+data/generated/
+data/raw/
+models/*.onnx
+models/*.bin
+models/*.npz
+*.parquet
+!data/sample/*.csv
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
