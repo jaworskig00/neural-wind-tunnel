@@ -179,6 +179,25 @@ def march_surface(
     count = s.size
     ue = np.maximum(edge_velocity, 1e-9)
 
+    # A branch of one or two points means the stagnation point landed on or next to the trailing
+    # edge, which happens at extreme incidence or on a degenerate section. There is nothing to
+    # march, and reporting failure is better than letting a gradient of an empty array raise.
+    if count < 3:
+        return SurfaceBoundaryLayer(
+            status=SurfaceStatus.NOT_CONVERGED,
+            s=s,
+            x=x,
+            theta=np.zeros(count),
+            shape_factor=np.zeros(count),
+            cf=np.zeros(count),
+            transition_x=1.0,
+            separation_induced_transition=False,
+            separation_x=float("nan"),
+            theta_te=float("nan"),
+            shape_factor_te=float("nan"),
+            edge_velocity_te=float(ue[-1]) if count else float("nan"),
+        )
+
     # --- Laminar: Thwaites ------------------------------------------------------------------
     integrand = ue**5
     integral = np.concatenate(

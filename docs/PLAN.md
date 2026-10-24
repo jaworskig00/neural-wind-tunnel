@@ -214,7 +214,7 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 
 ### M2 — Dataset
 
-- [ ] **T2.1** `tools/dataset/sample.py`: Sobol sequence over the 12 CST weights plus alpha, within the bounds in `DATASET-SCHEMA.md`; validity filters (thickness 6–20 %, no surface crossing, monotone-enough nose, LE radius bounds); rejection rate reported.
+- [x] **T2.1** `tools/dataset/sample.py`: Sobol sequence over the 12 CST weights plus alpha, within the bounds in `DATASET-SCHEMA.md`; validity filters (thickness 6–20 %, no surface crossing, monotone-enough nose, LE radius bounds); rejection rate reported.
 - [ ] **T2.2** `tools/dataset/run.py`: multiprocessing batch runner with per-row `solver_status`, resumable checkpoints, parquet writer; failures recorded, never imputed.
 - [ ] **T2.3** `tools/dataset/pod.py`: POD via truncated SVD on the velocity fields; export mean field plus 32 modes to `.npz` and to the fp16 atlas layout the browser loads; report captured energy per mode count.
 - [ ] **T2.4** Coverage report (`docs/dataset.md`), `data/sample/designs-sample.csv` with 2000 rows committed, `manifest.json` with bounds, counts, checksums, solver version and data licence.

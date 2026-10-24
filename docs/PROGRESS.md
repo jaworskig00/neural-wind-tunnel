@@ -291,3 +291,26 @@ and separation-induced transition — an assumption, not a model — is what set
 roughly four degrees. Both must surface in the app and in `docs/accuracy.md`.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T2.1 Shape sampling
+
+**Done.** `tools/dataset/sample.py`: scrambled Sobol sequence over the twelve CST weights, drawn
+in powers-of-two blocks so its balance properties hold, with the published validity filters and a
+tally of why candidates were rejected. Incidences are drawn one per stratum so every shape covers
+the whole range without every shape sharing the same grid of angles. The leading-edge radius comes
+from the closed form, per ADR-013.
+
+**Verified.** `uv run pytest tools/dataset` 16 passed, including that Sobol's worst per-dimension
+gap beats independent uniform draws of the same size. Acceptance rate 83 % over 240 candidates,
+rejections split 33 crossing surfaces and 7 out-of-range thickness. The accepted set spans
+thickness 0.064 to 0.200 and camber -0.043 to +0.058.
+
+**Follow-ups.** Measured the solver's convergence across the design space — sixty shapes at
+eleven angles — and cut the sampled incidence range from +14 to +10 degrees as a result: the
+converged fraction is 90 % at zero incidence, 45 % at six degrees, 15 % at ten and zero at
+fourteen. ADR-016 records the decision and the schema now publishes that table instead of leaving
+a consumer to discover it. The measurement also turned up a crash: a boundary-layer branch of
+fewer than three points, which happens when the stagnation point lands on the trailing edge, now
+reports failure rather than raising out of `np.gradient`.
+
+**Commit.** see `git log`

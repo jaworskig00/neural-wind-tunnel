@@ -333,3 +333,30 @@ values. Coverage thins above roughly six degrees and the surrogate will be weake
 `docs/accuracy.md` must show per incidence rather than as a single aggregate number. Thwaites on
 a flat plate reproduces Blasius to 1.03 %, which is that method's known accuracy, so the laminar
 side carries about a percent of error before any of this is considered.
+
+---
+
+## ADR-016 — The sampled incidence range is set by measured convergence, and the schema is amended before publication
+
+**Status.** accepted
+
+**Context.** The plan assumed incidence from -6 to +14 degrees. Measuring the solver across a
+Sobol sample of sixty shapes at eleven angles showed the viscous march converging for 90 % of
+shapes at zero incidence, 45 % at six degrees, 15 % at ten and none at fourteen.
+
+**Decision.** Cut the sampled range to -6 to +10 degrees. Beyond ten the yield is below 15 %,
+which would spend a fifth of the run on rows that fail and still leave coverage too thin for the
+surrogate to learn anything trustworthy. The negative side is kept to -6 despite a 47 % yield
+because incidence coverage below zero is worth the compute.
+
+`docs/DATASET-SCHEMA.md` is amended in place rather than version-bumped. ADR-010 requires a
+version bump for a breaking change, but no `dataset-v1` Release exists yet and no consumer has
+read real data, so there is nothing to break. The change is recorded in `CHANGELOG.md`, and the
+schema now publishes the measured convergence table so a consumer can see the coverage rather
+than discovering it. Once the Release is published this exemption ends.
+
+**Consequences.** Roughly 8400 shapes at eight stratified angles each yields about 40 000
+converged rows. The surrogate will be weakest at the extremes of the range, which
+`docs/accuracy.md` must show per incidence. A guard was also added for a boundary-layer branch of
+fewer than three points, which happens when the stagnation point lands on the trailing edge at
+extreme incidence; it reports failure instead of raising.

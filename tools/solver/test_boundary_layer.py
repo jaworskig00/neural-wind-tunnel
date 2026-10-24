@@ -168,3 +168,14 @@ class TestSquireYoung:
     def test_drag_is_positive_and_small_for_a_plate(self) -> None:
         layer = flat_plate()
         assert 0.0 < layer.cd_squire_young < 0.01
+
+
+class TestDegenerateBranches:
+    """A branch with too few points must fail cleanly rather than raise."""
+
+    @pytest.mark.parametrize("points", [1, 2])
+    def test_a_short_branch_is_not_converged(self, points: int) -> None:
+        s = np.linspace(0.0, 0.01, points)
+        layer = march_surface(s, s.copy(), np.ones_like(s), REYNOLDS)
+        assert layer.status is SurfaceStatus.NOT_CONVERGED
+        assert math.isnan(layer.cd_squire_young)

@@ -3,7 +3,12 @@ name = "neural-wind-tunnel-tools"
 version = "0.1.0"
 description = "Reference solver, dataset pipeline and surrogate training for the Neural Wind Tunnel"
 requires-python = ">=3.12"
-dependencies = ["numpy>=2.3"]
+dependencies = [
+    "numpy>=2.3",
+    "pandas>=3.1.0",
+    "pyarrow>=26.0.0",
+    "scipy>=1.18.1",
+]
 
 [dependency-groups]
 dev = [

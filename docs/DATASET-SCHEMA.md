@@ -54,12 +54,18 @@ time, and that file is authoritative for a given dataset version.
 | `cst_l_5`             | -0.25 | 0.20  |
 | `alpha_deg`           | -6.0  | 14.0  |
 
-Coverage is not uniform across this range. The reference solver is an uncoupled integral method
-with no separated-flow model, so the viscous march stops converging somewhere between six and
-eight degrees depending on camber; those rows are published with `solver_status =
-"bl_not_converged"` and must be filtered out. Expect the density of valid rows to thin above
-roughly six degrees and to be sparse near the upper bound. See `solver-validation.md` and
-ADR-015.
+Coverage is not uniform across this range, and this is measured rather than estimated. The
+reference solver is an uncoupled integral method with no separated-flow model, so the viscous
+march stops converging as the adverse gradient strengthens. Across a Sobol sample of the shape
+space the fraction of rows with `solver_status = "ok"` is:
+
+| `alpha_deg` | -6   | -4   | -2   | 0    | +2   | +4   | +6   | +8   | +10  |
+| ----------- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
+| converged   | 47 % | 67 % | 77 % | 90 % | 77 % | 63 % | 45 % | 23 % | 15 % |
+
+Always filter on `solver_status == "ok"`. Expect valid rows to thin markedly beyond six degrees.
+The upper sampling bound was cut from fourteen degrees to ten for exactly this reason; see
+ADR-015 and ADR-016 and `solver-validation.md`.
 
 Validity filters applied after sampling and before solving: maximum thickness between 6 % and
 20 % of chord, no crossing of the two surfaces anywhere in `(0, 1)`, leading-edge radius between

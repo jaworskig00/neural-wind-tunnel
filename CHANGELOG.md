@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/DATASET-SCHEMA.md`: the sampled incidence range is now -6 to +10 degrees rather than
+  -6 to +14, and the document publishes the measured per-incidence convergence rate. Amended in
+  place rather than version-bumped because no dataset Release exists yet; see ADR-016.
+
 ## [0.1.0-m0] - 2026-10-24
 
 Milestone M0: the repository, the toolchain and continuous integration.
