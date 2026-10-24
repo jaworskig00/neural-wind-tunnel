@@ -5,6 +5,7 @@ import { BodyMask } from '../gpgpu/bodyMask'
 import { FrameProbe } from '../gpgpu/frameProbe'
 import { ParticleField } from '../gpgpu/particles'
 import { TrailBuffer } from '../gpgpu/trails'
+import { StreamlineRibbons } from './StreamlineRibbons'
 import type { Prediction } from '../ml/types'
 import { podAtlasUrl } from '../ml/sources'
 import {
@@ -194,7 +195,7 @@ export function FlowField({ prediction, capabilities, onTier }: FlowFieldProps) 
     current.particles.points.rotation.z = (-alphaDeg * Math.PI) / 180
     renderer.render(scene, camera)
 
-    if (view === 'surface') return
+    if (view === 'surface' || view === 'streamlines') return
     current.particles.step(renderer, delta, current.field.texture, current.mask.texture)
     current.trails.accumulate(renderer, camera, delta)
     current.trails.draw(renderer)
@@ -213,5 +214,14 @@ export function FlowField({ prediction, capabilities, onTier }: FlowFieldProps) 
     }
   }, 1)
 
-  return null
+  const showStreamlines = view === 'streamlines' || view === 'both'
+
+  return showStreamlines ? (
+    <StreamlineRibbons
+      stages={stages}
+      section={section}
+      alphaDeg={alphaDeg}
+      prediction={prediction}
+    />
+  ) : null
 }

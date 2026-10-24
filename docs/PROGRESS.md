@@ -657,3 +657,22 @@ The hash is written with `replaceState` after 250 ms of quiet. Writing on every 
 the back button with every slider position.
 
 **Commit.** see `git log`
+
+## T7.1 — streamlines
+
+**Done.** A hundred-odd curves integrated on the CPU from the reconstructed velocity field, read
+back once per prediction, drawn as one `LineSegments`. The crossing-number test against the section
+outline stops a curve at the surface rather than letting it swim through the body.
+
+**Two bugs, both invisible rather than wrong.** The first: the geometry was built in an effect, and
+a child's effects run before its parent's, so on the first mount the GPU stages did not exist yet
+and nothing re-ran when they appeared. Moved into `useFrame` at priority 0.5, which simply looks
+every frame and acts when there is something to look at. The second was worse: replacing the
+`position` attribute on a geometry three has already uploaded does not reliably invalidate the
+driver's buffer. Ninety-six curves and 21 448 points existed in memory and never appeared on screen.
+A whole new geometry per prediction fixes it.
+
+**Honesty note.** These are integrated through the same reconstructed field the particles advect in
+— `mean + sum(a_i * phi_i)` — not a decorative curve family drawn to look like flow.
+
+**Commit.** see `git log`

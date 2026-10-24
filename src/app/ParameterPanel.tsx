@@ -71,6 +71,8 @@ export function ParameterPanel() {
   const setTrailIntensity = useAppStore((state) => state.setTrailIntensity)
   const tier = useAppStore((state) => state.tier)
   const setTier = useAppStore((state) => state.setTier)
+  const view = useAppStore((state) => state.view)
+  const setView = useAppStore((state) => state.setView)
 
   const metrics = useMemo(() => sectionMetrics(section.upper, section.lower), [section])
 
@@ -180,6 +182,29 @@ export function ParameterPanel() {
           step={0.05}
           onChange={setTrailIntensity}
         />
+        <div className="mb-1.5 grid grid-cols-4 gap-1 text-[0.65rem]">
+          {(['particles', 'streamlines', 'both', 'surface'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => {
+                setView(mode)
+              }}
+              title={
+                mode === 'streamlines'
+                  ? 'Curves everywhere tangent to the velocity, integrated from the predicted field'
+                  : undefined
+              }
+              className={`rounded border py-1 transition-colors ${
+                view === mode
+                  ? 'border-accent bg-raised text-accent'
+                  : 'border-line bg-base text-muted hover:border-faint hover:text-text'
+              }`}
+            >
+              {mode === 'streamlines' ? 'lines' : mode === 'surface' ? 'none' : mode}
+            </button>
+          ))}
+        </div>
         <div className="mt-1.5 grid grid-cols-4 gap-1 text-[0.65rem]">
           {(['auto', 'low', 'mid', 'high'] as const).map((choice) => (
             <button
