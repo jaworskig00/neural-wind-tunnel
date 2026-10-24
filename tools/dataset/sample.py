@@ -22,8 +22,7 @@ from tools.solver.geometry import (
     Airfoil,
     GeometryMetrics,
     cst,
-    cst_leading_edge_radius,
-    geometry_metrics,
+    cst_metrics,
 )
 
 Array = NDArray[np.float64]
@@ -106,8 +105,8 @@ def accept(upper_weights: Array, lower_weights: Array) -> tuple[Shape | None, st
         return None, RejectionReason.SURFACES_CROSS
 
     airfoil = cst(upper_weights, lower_weights)
-    le_radius = cst_leading_edge_radius(float(upper_weights[0]))
-    metrics = geometry_metrics(airfoil, le_radius=le_radius)
+    # Exact metrics from the formula, not read off the panel loop; see cst_metrics and ADR-013.
+    metrics = cst_metrics(upper_weights, lower_weights)
 
     if not THICKNESS_BOUNDS[0] <= metrics.thickness_max <= THICKNESS_BOUNDS[1]:
         return None, RejectionReason.THICKNESS_OUT_OF_RANGE

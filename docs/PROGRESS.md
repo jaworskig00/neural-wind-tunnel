@@ -341,3 +341,29 @@ fourteen minutes across eight workers and 4.9 GB of temporary field shards, whic
 and deleted after the basis is built.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T4.2 TypeScript CST evaluator (taken early, out of plan order)
+
+**Done.** `src/geometry/cst.ts` ports the CST evaluator, cosine spacing, the section loop and the
+derived metrics, with `src/geometry/__fixtures__/cst.json` generated from the Python original by
+`tools/solver/make_ts_fixtures.py`. Taken out of order because the dataset run occupies all cores
+for about fifteen minutes and this task needs none of it.
+
+**Verified.** `pnpm test` 35 passed: surfaces agree with Python to 1e-9 at eleven stations for four
+sections, metrics to 1e-9, the loop to 1e-12, and the loop is wound counter-clockwise as the solver
+demands. `uv run pytest` 94 passed.
+
+**Follow-ups.** The parity test surfaced a real methodological split. Python's `geometry_metrics`
+reads thickness and camber off a linear interpolation of the panel loop, which is all that is
+available for arbitrary coordinates but costs about 2e-5 in peak thickness and a hundredth of chord
+in its station. The TypeScript port evaluates the formula directly, which is exact. Rather than
+making the browser imitate the less accurate path, Python gained `cst_metrics`, an exact path used
+by the sampler and the fixtures, and the interpolated path stays for coordinates that have no
+parametrisation. The geometry columns of the dataset run now in flight will be recomputed from the
+CST weights during the merge in T2.4, so the published values are the exact ones regardless of
+which code path a worker happened to load.
+
+Presets changed from NACA 23012 to NACA 0008: the solver implements the four-digit series only, and
+a five-digit section needs its own camber line. `docs/PLAN.md` T4.4 updated to match.
+
+**Commit.** see `git log`

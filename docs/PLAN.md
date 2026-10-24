@@ -237,9 +237,9 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 ### M4 — Frontend shell and geometry
 
 - [ ] **T4.1** App shell: layout with viewport, parameter panel, chart dock, header; light and dark themes; responsive down to tablet width.
-- [ ] **T4.2** `src/geometry/cst.ts`: TypeScript port of the CST evaluator; parity test against a committed Python-generated fixture within 1e-6.
+- [x] **T4.2** `src/geometry/cst.ts`: TypeScript port of the CST evaluator; parity test against a committed Python-generated fixture within 1e-6.
 - [ ] **T4.3** R3F scene: extruded airfoil mesh rebuilt from the CST weights, orbit camera with sensible limits, neutral studio lighting, chord-aligned reference grid.
-- [ ] **T4.4** zustand store plus parameter controls: 12 CST sliders grouped into shape handles, alpha slider, NACA presets (0012, 2412, 4412, 23012), reset, undo of the last change.
+- [ ] **T4.4** zustand store plus parameter controls: 12 CST sliders grouped into shape handles, alpha slider, NACA presets (0008, 0012, 2412, 4412; the solver implements the four-digit series only), reset, undo of the last change.
 - [ ] **T4.5** Playwright screenshot of the default state committed to `docs/screenshots/`; tag `v0.5.0-m4`.
 
 **Acceptance.** Dragging a slider rebuilds the geometry inside the 16 ms budget with no visible tearing; presets load the expected shapes.

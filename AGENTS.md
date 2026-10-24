@@ -49,7 +49,11 @@ fixing it is the next task, ahead of everything else.
 
 ### TypeScript
 
-- `strict` on, no `any` without a comment explaining why, no non-null assertions in new code.
+- `strict` on, no `any` without a comment explaining why, and no non-null assertions in new
+  code -- except in the numeric kernels under `src/geometry`, `src/rom`, `src/gpgpu` and
+  `src/ml`, where `noUncheckedIndexedAccess` types every typed-array read as
+  `number | undefined` and a loop bound already proves the index. The ESLint config scopes that
+  exception and says why; it does not apply to UI or application code.
 - Modules stay small and single-purpose; the folder layout in `docs/PLAN.md` is the boundary map.
 - No barrel files that re-export everything; import from the module that owns the symbol.
 - Comments explain why, not what. Physics and shader maths get a comment with the formula or a

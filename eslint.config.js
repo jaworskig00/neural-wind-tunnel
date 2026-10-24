@@ -49,6 +49,18 @@ export default tseslint.config(
     extends: [reactHooks.configs.flat['recommended-latest']],
   },
 
+  // Numeric kernels. `noUncheckedIndexedAccess` types every typed-array read as
+  // `number | undefined`, which is the right default for application code and pure friction in a
+  // loop whose bound proves the index is in range. The alternatives are worse: `?? 0` hides a real
+  // out-of-bounds read behind a plausible number, and an unwrap helper per element defeats the
+  // point of a tight loop. The rule stays on everywhere else, including the UI.
+  {
+    files: ['src/geometry/**/*.ts', 'src/rom/**/*.ts', 'src/gpgpu/**/*.ts', 'src/ml/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
+
   // Unit tests. Indexing a Float64Array under `noUncheckedIndexedAccess` yields
   // `number | undefined`, and asserting non-null is clearer in a test than threading an
   // unwrap helper through every assertion. Production code keeps the rule on.

@@ -247,6 +247,32 @@ def _refine_extremum(x: Array, y: Array, index: int) -> tuple[float, float]:
     return float(a * vertex**2 + b * vertex + c), float(vertex)
 
 
+def cst_metrics(upper_weights: Array, lower_weights: Array, samples: int = 2001) -> GeometryMetrics:
+    """Derived metrics evaluated straight from the CST formula.
+
+    :func:`geometry_metrics` reads its values off a linear interpolation of the panel loop, which
+    is all that is available for arbitrary coordinates but costs about 2e-5 in peak thickness and
+    0.01 of chord in its station. For a CST section the formula can be evaluated at any station
+    directly, so this is both exact and the version the TypeScript port in `src/geometry/cst.ts`
+    mirrors -- the parity fixture holds the two to 1e-9.
+    """
+    x = cosine_spacing(samples)
+    thickness = cst_surface(upper_weights, x) - cst_surface(lower_weights, x)
+    camber = 0.5 * (cst_surface(upper_weights, x) + cst_surface(lower_weights, x))
+
+    thickness_peak, thickness_at = _refine_extremum(x, thickness, int(np.argmax(thickness)))
+    camber_peak, camber_at = _refine_extremum(x, camber, int(np.argmax(np.abs(camber))))
+
+    return GeometryMetrics(
+        thickness_max=thickness_peak,
+        thickness_max_x=thickness_at,
+        camber_max=camber_peak,
+        camber_max_x=camber_at,
+        le_radius=cst_leading_edge_radius(float(upper_weights[0])),
+        area=float(np.trapezoid(thickness, x)),
+    )
+
+
 def geometry_metrics(
     airfoil: Airfoil, samples: int = 2001, le_radius: float | None = None
 ) -> GeometryMetrics:

@@ -15,6 +15,7 @@ from tools.solver.geometry import (
     cosine_spacing,
     cst,
     cst_leading_edge_radius,
+    cst_metrics,
     cst_surface,
     fit_cst,
     geometry_metrics,
@@ -184,3 +185,27 @@ class TestGeometryMetrics:
         metrics = geometry_metrics(Airfoil(name="flat", coordinates=loop))
         assert metrics.thickness_max == 0.0
         assert metrics.area == 0.0
+
+
+class TestCstMetrics:
+    """The exact metrics path, which the TypeScript port mirrors."""
+
+    def test_agrees_with_the_interpolated_path_to_within_its_known_bias(self) -> None:
+        upper, lower = fit_cst(naca4("2412", panel_count=320))
+        exact = cst_metrics(upper, lower)
+        interpolated = geometry_metrics(cst(upper, lower))
+        # Reading metrics off a linear interpolation of 80 panels per surface costs about 3e-5 in
+        # peak thickness and a hundredth of chord in its station; see ADR-013.
+        assert abs(exact.thickness_max - interpolated.thickness_max) < 5e-5
+        assert abs(exact.thickness_max_x - interpolated.thickness_max_x) < 0.02
+
+    def test_is_more_accurate_on_a_known_section(self) -> None:
+        upper, lower = fit_cst(naca4("0012", panel_count=640))
+        exact = cst_metrics(upper, lower)
+        # A CST fit of NACA 0012 should peak near 12 % of chord at 30 % of chord.
+        assert abs(exact.thickness_max - 0.12) < 1e-3
+        assert abs(exact.thickness_max_x - 0.30) < 0.02
+
+    def test_uses_the_closed_form_leading_edge_radius(self) -> None:
+        weights = np.full(CST_ORDER, 0.2)
+        assert math.isclose(cst_metrics(weights, -weights).le_radius, 0.02, rel_tol=1e-12)
