@@ -563,3 +563,73 @@ README has to be clear that both paths exist and why the lighter one is default,
 "ONNX Runtime Web in the browser" is a claim the project makes and it must not read as unsupported.
 The reversal is itself worth showing: shipping both and measuring is the point, and the measurement
 disagreed with the plan.
+
+## ADR-022 — The assistant has one way into the app, and it is the dispatcher
+
+**Context.** A language model that can change the design is the difference between a demo and a
+tool, and it is also the easiest way to turn an honest project into a dishonest one. A model asked
+"what happens if I thin this?" will cheerfully answer from its training data, and the answer will
+sound exactly like one that came from the surrogate.
+
+**Options.**
+
+1. Let the model answer directly and show its prose. Cheapest, and worthless: nothing it says is
+   grounded in this application's numbers.
+2. Tools that return numbers, with the model free to write the design into the store.
+3. Tools that return numbers, with every write going through a dispatcher that validates, clamps
+   and reports — and a system prompt that forbids stating a figure that did not come from a tool
+   result in that conversation.
+
+**Decision.** Option 3. `src/llm/dispatch.ts` is the only path from the model to the store, and it
+does exactly what a slider does: clamp to `TRAINED_BOUNDS` and `TRAINED_ALPHA_RANGE`, predict with
+the same surrogate, and report. Where it clamps, it says so in the tool result, so the model cannot
+explain a design it did not get. The dispatcher is pure and React-free, which is why the whole tool
+surface is unit-tested without a browser.
+
+**Consequences.** The assistant cannot do anything a visitor could not do by hand, which is the
+intended ceiling. A model that wants to explore outside the trained range gets a clamp and a note
+rather than an extrapolation. The cost is that tool results are verbose — every call carries the
+full measured geometry and the coefficient delta — which spends tokens to buy grounding.
+
+## ADR-023 — Bring your own key, and a policy that admits what that means
+
+**Context.** The app is static: there is no server, so there is nowhere to put a key but the
+visitor's browser. Anthropic's API requires an explicit opt-in header for browser-origin requests,
+named `anthropic-dangerous-direct-browser-access`, and it is named that for a reason.
+
+**Options.**
+
+1. A hosted proxy holding a key. Best security, and it makes this project cost money per visitor
+   and stop being static.
+2. No assistant at all.
+3. Bring-your-own-key, stored in `localStorage`, sent from the page to the provider the visitor
+   chose, with a demo mode so the feature is usable without one.
+
+**Decision.** Option 3, with the demo as the default so that the first visit needs no decision at
+all. The key lives under its own `localStorage` entry, is never serialised next to anything else,
+never enters the URL state, and never appears in an error message: a failed request is reported as
+the provider's status and the provider's own text. `tests/e2e/assistant.spec.ts` plants a canary
+key and asserts it reaches the provider's request header and nothing else — not the URL, not the
+DOM, not the console.
+
+**Consequences.** The Content Security Policy cannot allowlist provider origins, because the
+visitor chooses the endpoint — an OpenAI-compatible gateway on their own machine is a supported
+case. `connect-src` therefore allows HTTPS generally plus loopback. That is weaker than an
+allowlist and much stronger than nothing, and it is the honest consequence of the feature being
+bring-your-own-endpoint. A proxy stays in the backlog for anyone who deploys this as a product.
+
+## ADR-024 — The demo replays what the model said, never what the tools returned
+
+**Context.** A demo mode with no key has to come from a recording. The tempting shape is to record
+the whole conversation, numbers included — which produces an assistant that confidently quotes
+figures that have nothing to do with the design on screen.
+
+**Decision.** Only the model's words and its choice of tools are recorded. The tools themselves run
+for real, against the live surrogate and the design the visitor currently has. The recorded text
+carries `{{placeholders}}` that resolve against the tool results of that conversation, so a demo
+answer is a real answer about the visitor's own section.
+
+**Consequences.** A recorded sentence can only mention a quantity some tool in that scenario
+actually returns, which constrains how the transcripts are written. `demo.test.ts` fails on any
+unresolved placeholder, which is what keeps that constraint honest. The three scenarios are
+therefore also the acceptance tests for the whole tool loop.

@@ -282,11 +282,11 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 
 ### M8 — LLM assistant
 
-- [ ] **T8.1** Provider adapters for Anthropic and OpenAI-compatible endpoints (so Grok and local gateways work); key entered in the UI, stored only in `localStorage`, never logged, never in a URL; a clear note that the key goes straight from the browser to the chosen provider.
-- [ ] **T8.2** Tool schema and dispatcher: `set_shape_params`, `nudge_shape`, `run_alpha_sweep`, `explain_result`; every tool call is validated against the parameter bounds before it touches the store.
-- [ ] **T8.3** Chat panel showing the tool calls it made, with apply and undo, and the resulting coefficient delta rendered next to the explanation.
-- [ ] **T8.4** Demo mode with recorded transcripts for three scenarios: make it thinner, reduce drag at 5 degrees, why did Cd rise; the same transcripts drive tests against a mocked provider.
-- [ ] **T8.5** Security pass: no key in any log, error message, telemetry or URL; a strict CSP that still allows the configured provider origins; tag `v0.9.0-m8`.
+- [x] **T8.1** Provider adapters for Anthropic and OpenAI-compatible endpoints (so Grok and local gateways work); key entered in the UI, stored only in `localStorage`, never logged, never in a URL; a clear note that the key goes straight from the browser to the chosen provider.
+- [x] **T8.2** Tool schema and dispatcher: `set_shape_params`, `nudge_shape`, `run_alpha_sweep`, `explain_result`; every tool call is validated against the parameter bounds before it touches the store.
+- [x] **T8.3** Chat panel showing the tool calls it made, with apply and undo, and the resulting coefficient delta rendered next to the explanation.
+- [x] **T8.4** Demo mode with recorded transcripts for three scenarios: make it thinner, reduce drag at 5 degrees, why did Cd rise; the same transcripts drive tests against a mocked provider.
+- [x] **T8.5** Security pass: no key in any log, error message, telemetry or URL; a strict CSP that still allows the configured provider origins; tag `v0.9.0-m8`.
 
 **Acceptance.** The app is fully usable with an empty key and the demo mode is reachable in one click; the three scenarios pass as tests; a key-leak test greps the built bundle and the console output.
 **Verify.** Mocked-provider tests in CI; manual check with a real key recorded in `PROGRESS.md`.

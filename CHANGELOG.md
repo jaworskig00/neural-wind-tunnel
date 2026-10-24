@@ -19,6 +19,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   -6 to +14, and the document publishes the measured per-incidence convergence rate. Amended in
   place rather than version-bumped because no dataset Release exists yet; see ADR-016.
 
+## [0.9.0-m8] - 2026-10-24
+
+Milestone M8: the assistant.
+
+### Added
+
+- An assistant with four tools — `set_shape_params`, `nudge_shape`, `run_alpha_sweep` and
+  `explain_result` — dispatched through `src/llm/dispatch.ts`, which clamps every proposed design
+  to the range the surrogate was trained on and reports what it had to move.
+- Provider adapters for Anthropic's Messages API and any OpenAI-compatible chat-completions
+  endpoint, including a gateway on localhost. The key is entered in the panel and kept in this
+  browser's local storage.
+- A demo mode that needs no key: three recorded conversations whose prose is recorded and whose
+  tool calls run for real against the live surrogate.
+- A chat panel showing every tool call by name with the coefficient delta it produced and an undo
+  that restores the design from before that call.
+- `scripts/check-bundle.mjs`, run in CI: fails the build if anything credential-shaped reaches
+  `dist` or if the production Content Security Policy is missing.
+
+### Security
+
+- A Content Security Policy injected into the production build.
+- The API key never enters the URL state, a log or an error message; an end-to-end test plants a
+  canary key and asserts it reaches only the provider's request header.
+
 ## [0.8.0-m7] - 2026-10-24
 
 Milestone M7: streamlines, polars, shareable state and the accessibility pass.

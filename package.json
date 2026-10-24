@@ -21,7 +21,8 @@
     "format:check": "prettier --check .",
     "prepare": "simple-git-hooks",
     "size": "size-limit",
-    "models:sync": "uv run python tools/sync_models.py"
+    "models:sync": "uv run python tools/sync_models.py",
+    "check:bundle": "node scripts/check-bundle.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

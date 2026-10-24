@@ -697,3 +697,34 @@ every number the view shows is also in the header and the charts. No live region
 coefficients; it would talk continuously through a slider drag.
 
 **Commit.** see `git log`
+
+## M8 — the assistant
+
+**Done.** Four tools, two provider adapters, a demo mode that needs no key, and a panel that shows
+every tool call with an undo next to it. Twenty-nine unit tests and four browser tests.
+
+**The design decision that mattered** is in ADR-022: the dispatcher is the only path from a model
+to the store, and it does exactly what a slider does — clamp to the trained range, predict with the
+same surrogate, report the clamp. A model cannot write a number into this app that the app would
+not have produced itself, and the system prompt forbids stating a figure that did not come from a
+tool result in that conversation. Verbose tool results are the price; grounding is what they buy.
+
+**The demo is recorded prose, not recorded numbers.** The tools really run, against the real
+surrogate and whatever section is on screen, and the recorded text carries placeholders that
+resolve against those results. `demo.test.ts` fails on an unresolved placeholder, which is what
+stops a transcript from quoting a figure no tool produced. The three scenarios double as the
+acceptance test for the whole loop.
+
+**Security.** The key lives under its own `localStorage` entry, never enters the URL state, and an
+error is reported as the provider's status plus the provider's own text — never the request.
+`tests/e2e/assistant.spec.ts` plants a canary key, fails the provider call, and asserts the key
+reached the request header and nothing else: not the URL, not the DOM, not the console. The
+production build now carries a CSP, injected at build time so the dev server can keep its `eval`,
+and `scripts/check-bundle.mjs` fails CI if the policy is missing or anything credential-shaped is
+in `dist`. `connect-src` cannot be an allowlist, because the endpoint is the visitor's choice;
+ADR-023 says so rather than pretending otherwise.
+
+**Noted for M9.** The entry bundle is at 95.7 kB against a 100 kB budget. The assistant is a
+candidate for its own chunk in the T9.1 audit.
+
+**Commit.** see `git log`

@@ -5,9 +5,11 @@ import { PolarChart } from '../charts/PolarChart'
 import { usePolarSweep } from '../charts/usePolarSweep'
 import { useSolverOverlay } from '../charts/useSolverOverlay'
 import type { TierReport } from '../rom/capabilities'
+import { useAssistant } from '../llm/useAssistant'
 import { useSurrogate } from '../ml/useSurrogate'
 import { useAppStore } from '../state/store'
 import { useUrlState } from '../state/useUrlState'
+import { AssistantPanel } from './AssistantPanel'
 import { HonestyBanner } from './HonestyBanner'
 import { ParameterPanel } from './ParameterPanel'
 import { PressureLegend } from './PressureLegend'
@@ -74,12 +76,31 @@ export function App() {
       frameMs: info.medianFrameMs,
     })
   }, [])
+  const assistant = useAssistant(surrogate)
+  const [assistantOpen, setAssistantOpen] = useState(false)
   const exact = overlay.lookup(presetId, alphaDeg)
 
   return (
     <div className="flex h-full flex-col bg-base">
       <header className="flex shrink-0 items-baseline justify-between gap-4 border-b border-line px-4 py-2.5">
-        <h1 className="text-sm font-semibold tracking-tight">Neural Wind Tunnel</h1>
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-sm font-semibold tracking-tight">Neural Wind Tunnel</h1>
+          <button
+            type="button"
+            onClick={() => {
+              setAssistantOpen((open) => !open)
+            }}
+            aria-expanded={assistantOpen}
+            data-testid="assistant-toggle"
+            className={`rounded border px-2 py-0.5 text-[0.65rem] transition-colors ${
+              assistantOpen
+                ? 'border-accent bg-raised text-accent'
+                : 'border-line bg-base text-muted hover:border-faint hover:text-text'
+            }`}
+          >
+            Assistant
+          </button>
+        </div>
         <div className="flex items-baseline gap-4">
           <Coefficient label="α" value={alphaDeg} digits={1} />
           <Coefficient
@@ -202,6 +223,14 @@ export function App() {
             )}
           </p>
         </main>
+        {assistantOpen && (
+          <AssistantPanel
+            assistant={assistant}
+            onClose={() => {
+              setAssistantOpen(false)
+            }}
+          />
+        )}
         <ParameterPanel />
       </div>
     </div>
