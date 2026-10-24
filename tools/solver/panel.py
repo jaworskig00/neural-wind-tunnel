@@ -42,7 +42,8 @@ MIN_PANEL_LENGTH = 1e-10
 #: viscous march in `tools.solver.boundary_layer`: at a sharp trailing edge the inviscid solution is
 #: badly conditioned, and the moment integral amplifies it because the lever arm there is three
 #: quarters of a chord. Left in, the quarter-chord moment reached -11 770 on 0.87 % of sampled rows.
-#: The omitted panels carry little real load on an attached section -- NACA 2412 and 4412 still match
+#: The omitted panels carry little real load on an attached section -- NACA 2412 and 4412 still
+#: match
 #: their published moments after the change -- and the alternative is publishing nonsense. See
 #: ADR-020.
 FORCE_INTEGRATION_CUTOFF_X = 0.98

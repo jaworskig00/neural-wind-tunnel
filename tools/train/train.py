@@ -70,8 +70,10 @@ def _tensors(split: Split, device: torch.device) -> tuple[torch.Tensor, torch.Te
 
 #: Huber transition point, in units of normalised output standard deviations.
 #:
-#: The targets are heavy-tailed: ten validation rows out of 6720 carried a quarter of a squared-error
-#: loss, and training under squared error drove the model to keep improving on the bulk while getting
+#: The targets are heavy-tailed: ten validation rows out of 6720 carried a quarter of a squared-
+#: error
+#: loss, and training under squared error drove the model to keep improving on the bulk while
+#: getting
 #: steadily *worse* on those extremes -- untrimmed validation loss tripled while the trimmed figure
 #: fell. That is the wrong trade for an app that lets a visitor build an extreme section. Huber is
 #: quadratic within one standard deviation and linear beyond, so an outlier still pulls the fit
@@ -110,8 +112,10 @@ def weighted_loss(
 #:
 #: Ten rows out of 6720 carry a quarter of the validation loss: the median row scores 0.0064 and the
 #: worst 11.6. Those are extreme sections whose fit swings from epoch to epoch, and letting them
-#: decide which weights to keep is selecting on noise -- the first run picked a lucky dip at epoch 72
-#: and produced a test loss twice its validation figure. Selection therefore uses a trimmed mean. The
+#: decide which weights to keep is selecting on noise -- the first run picked a lucky dip at epoch
+#: 72
+#: and produced a test loss twice its validation figure. Selection therefore uses a trimmed mean.
+#: The
 #: untrimmed mean is still reported, so nothing is hidden by the trimming.
 SELECTION_TRIM = 0.01
 
