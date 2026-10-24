@@ -37,8 +37,18 @@ export function buildAirfoilGeometry(
   const normals = new Float32Array(vertexCount * 3)
   // The chordwise station travels in `uv.x`, which the pressure colormap samples in M5.
   const uvs = new Float32Array(vertexCount * 2)
+  // Which surface a vertex belongs to, 0 for upper and 1 for lower. The pressure shader needs it
+  // to index the right half of the 128-entry array, and it cannot be derived from the position
+  // once the section is rotated by incidence.
+  const surfaces = new Float32Array(vertexCount)
 
-  const write = (index: number, point: Point, z: number, normal: readonly number[]): void => {
+  const write = (
+    index: number,
+    point: Point,
+    z: number,
+    normal: readonly number[],
+    surface: number,
+  ): void => {
     positions[index * 3] = point.x
     positions[index * 3 + 1] = point.z
     positions[index * 3 + 2] = z
@@ -47,9 +57,14 @@ export function buildAirfoilGeometry(
     normals[index * 3 + 2] = normal[2]!
     uvs[index * 2] = point.x
     uvs[index * 2 + 1] = index < count ? 0 : 1
+    surfaces[index] = surface
   }
 
+  // The loop runs trailing edge, upper surface, nose, lower surface, so the first half is upper.
+  const noseIndex = panelCount / 2
+
   for (let i = 0; i < count; i += 1) {
+    const surface = i <= noseIndex ? 0 : 1
     const previous = points[(i - 1 + count) % count]!
     const next = points[(i + 1) % count]!
     // Outward normal of the averaged edge direction. The loop is counter-clockwise, so rotating
@@ -58,14 +73,14 @@ export function buildAirfoilGeometry(
     const tangentZ = next.z - previous.z
     const length = Math.hypot(tangentX, tangentZ) || 1
     const normal = [tangentZ / length, -tangentX / length, 0] as const
-    write(i, points[i]!, -half, normal)
-    write(i + count, points[i]!, half, normal)
+    write(i, points[i]!, -half, normal, surface)
+    write(i + count, points[i]!, half, normal, surface)
   }
 
   const frontCentre = vertexCount - 2
   const backCentre = vertexCount - 1
-  write(frontCentre, { x: 0.5, z: 0 }, -half, [0, 0, -1])
-  write(backCentre, { x: 0.5, z: 0 }, half, [0, 0, 1])
+  write(frontCentre, { x: 0.5, z: 0 }, -half, [0, 0, -1], 0)
+  write(backCentre, { x: 0.5, z: 0 }, half, [0, 0, 1], 0)
 
   const indices: number[] = []
   for (let i = 0; i < count; i += 1) {
@@ -82,6 +97,7 @@ export function buildAirfoilGeometry(
   geometry.setAttribute('position', new BufferAttribute(positions, 3))
   geometry.setAttribute('normal', new BufferAttribute(normals, 3))
   geometry.setAttribute('uv', new BufferAttribute(uvs, 2))
+  geometry.setAttribute('aSurface', new BufferAttribute(surfaces, 1))
   geometry.setIndex(indices)
   geometry.computeBoundingSphere()
   return geometry
