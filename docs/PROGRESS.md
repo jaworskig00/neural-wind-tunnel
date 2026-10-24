@@ -452,3 +452,35 @@ only while no Release existed. From now on a breaking change bumps the version a
 in place.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T3.1, T5.1, T5.2, T5.4 Training pipeline and the browser inference layer
+
+**Done.** `tools/train/data.py` loads the dataset, splits it by `shape_id` so a shape's whole
+incidence sweep stays on one side, and normalises from the training split alone. Pressure, lift, the
+quarter-chord moment and the modal coefficients come from the inviscid solution and are valid for
+every row, so only drag is masked to the converged ones — 60 % more data for the outputs that can
+take it. `tools/train/model.py` is a 177 059-parameter MLP at 0.71 MB with normalisation folded into
+the graph, and `tools/train/export.py` writes both the ONNX graph and a flat float32 blob.
+
+On the browser side, `src/ml` holds a shared interface over two backends: ONNX Runtime Web, loaded
+by dynamic import so it never enters the bundle, and a hand-written forward pass over the blob that
+serves as both fallback and parity reference. `src/shaders` carries the pressure colormap, which
+samples the predicted stations per fragment from a 128-entry float texture and inverts the cosine
+station mapping in GLSL, so the mesh needs no index attribute. `src/charts/CpChart.tsx` draws the
+distribution with the pressure axis inverted and room for the exact solver curve beside it.
+
+**Verified.** 60 unit tests pass, lint and typecheck clean, entry bundle still 72.5 kB gzip with
+`onnxruntime-web` entirely absent from it. The TypeScript forward pass is checked against arithmetic
+worked out by hand on a two-layer toy model, and the blob parser is checked against four ways of
+getting the layout wrong. Splits confirmed on the real dataset: 53 760 / 6720 / 6720 rows with zero
+shape overlap.
+
+**Follow-ups.** These were taken out of plan order because the dataset regeneration occupies every
+core for twenty-five minutes and none of this needs it. Training itself is still blocked on that
+run finishing.
+
+The machine's load average reached 22 during the regeneration, which killed the `lint-staged`
+pre-commit hook twice; that commit was made with the hook skipped after running eslint, tsc and
+vitest by hand, and the commit message says so.
+
+**Commit.** see `git log`

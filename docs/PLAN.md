@@ -225,7 +225,7 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 
 ### M3 — Surrogate model
 
-- [ ] **T3.1** `tools/train/data.py`: load parquet, standardise inputs and outputs, deterministic train/val/test split by design id so alpha sweeps of one shape never straddle the split.
+- [x] **T3.1** `tools/train/data.py`: load parquet, standardise inputs and outputs, deterministic train/val/test split by design id so alpha sweeps of one shape never straddle the split.
 - [ ] **T3.2** `tools/train/model.py` and `train.py`: MLP 13 to 256 to 256 to 256 to 163 outputs (128 Cp stations, Cl, Cd, Cm, 32 POD coefficients), SiLU, weighted loss so the three scalar coefficients are not drowned by the 128 Cp values; early stopping; fixed seed; normalisation folded into the exported graph.
 - [ ] **T3.3** `tools/train/export.py`: export `surrogate.onnx`, raw `weights.bin` plus `manifest.json` for the TS backend, and a `reference_case.json` fixture; assert ONNX and PyTorch agree to 1e-5.
 - [ ] **T3.4** `docs/accuracy.md`: RMSE and worst case per output group, error versus alpha, error versus thickness, predicted-against-solver scatter plots, and an explicit "where this model breaks" section.
@@ -247,10 +247,10 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 
 ### M5 — Browser inference and pressure
 
-- [ ] **T5.1** `src/ml/SurrogateBackend.ts` interface plus the ORT Web backend: lazy dynamic import, wasm with SIMD and threads where available, artifact fetched from the Release URL with a local dev fallback.
-- [ ] **T5.2** Pure-TS backend reading `weights.bin`: a few dozen lines of typed matmul plus SiLU, used when ORT fails or is disabled by a query flag.
+- [x] **T5.1** `src/ml/SurrogateBackend.ts` interface plus the ORT Web backend: lazy dynamic import, wasm with SIMD and threads where available, artifact fetched from the Release URL with a local dev fallback.
+- [x] **T5.2** Pure-TS backend reading `weights.bin`: a few dozen lines of typed matmul plus SiLU, used when ORT fails or is disabled by a query flag.
 - [ ] **T5.3** Parity test: ORT, TS backend and the committed Python reference case agree to 1e-4; runs in CI.
-- [ ] **T5.4** Cp colormap material in GLSL on the airfoil surface, with a proper legend, a colour-blind-safe option and the sign convention stated.
+- [x] **T5.4** Cp colormap material in GLSL on the airfoil surface, with a proper legend, a colour-blind-safe option and the sign convention stated.
 - [ ] **T5.5** D3 Cp chart with the inverted pressure axis, hover readout, and a toggle overlaying the exact solver result for the current shape where a cached solve exists.
 - [ ] **T5.6** Honesty banner in the UI linking `docs/accuracy.md`; alpha outside the trained range triggers an explicit out-of-range warning; tag `v0.6.0-m5`.
 
