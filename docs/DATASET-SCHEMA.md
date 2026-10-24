@@ -173,8 +173,11 @@ Published as the GitHub Release `dataset-v1` on this repository.
 | `manifest.json`    | Schema version, row counts, bounds actually sampled, solver version, generation date, SHA-256 of every asset, data licence. |
 | `README.md`        | A standalone copy of this document.                                                                                         |
 
-Committed in the repository, not in the Release: `data/sample/designs-sample.csv`, 2000 rows
-with `solver_status = ok`, for tests and for consumers that do not want a 40 000-row download.
+Committed in the repository, not in the Release: `data/sample/designs-sample.csv`, 500 converged
+rows written at six significant figures, for tests and for consumers that do not want a 109 MB
+download. It is deliberately small: 194 columns of full-precision floats reach 7.6 MB at 2000 rows,
+which does not belong in a repository people clone to read the code. Take the Release asset for
+anything that needs the whole set.
 
 Stable URLs:
 

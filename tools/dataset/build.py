@@ -44,7 +44,12 @@ from tools.solver.solve import cp_stations
 SCHEMA_VERSION = 1
 DATASET_VERSION = "dataset-v1"
 DATA_LICENCE = "CC-BY-4.0"
-SAMPLE_ROWS = 2000
+#: Rows in the committed sample. 194 columns of full-precision floats make this file large fast:
+#: 2000 rows is 7.6 MB, which has no business in a repository people clone to read the code.
+#: 500 rows at six significant figures is 0.9 MB and still covers the design space well enough
+#: for tests and for a consumer to develop against. ADR-012 keeps anything larger in Releases.
+SAMPLE_ROWS = 500
+SAMPLE_FLOAT_FORMAT = "%.6g"
 SAMPLE_PATH = Path("data/sample/designs-sample.csv")
 REPORT_PATH = Path("docs/dataset.md")
 
@@ -315,7 +320,7 @@ def main() -> int:
     SAMPLE_PATH.parent.mkdir(parents=True, exist_ok=True)
     converged.sample(n=min(SAMPLE_ROWS, len(converged)), random_state=0).sort_values(
         "design_id"
-    ).to_csv(SAMPLE_PATH, index=False)
+    ).to_csv(SAMPLE_PATH, index=False, float_format=SAMPLE_FLOAT_FORMAT)
 
     manifest = {
         "schemaVersion": SCHEMA_VERSION,
