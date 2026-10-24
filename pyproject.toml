@@ -1,0 +1,42 @@
+[project]
+name = "neural-wind-tunnel-tools"
+version = "0.1.0"
+description = "Reference solver, dataset pipeline and surrogate training for the Neural Wind Tunnel"
+requires-python = ">=3.12"
+dependencies = ["numpy>=2.3"]
+
+[dependency-groups]
+dev = ["pytest>=8.4", "ruff>=0.14"]
+
+[tool.uv]
+# The tools are run from the repository root with `python -m tools.…`, not installed.
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tools"]
+python_files = ["test_*.py"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle
+  "F",   # pyflakes
+  "I",   # import sorting
+  "N",   # naming
+  "UP",  # pyupgrade
+  "B",   # bugbear
+  "SIM", # simplify
+  "RUF",
+]
+ignore = [
+  # Single-letter names are the readable choice in numerical code that mirrors a textbook
+  # formula; the surrounding docstring names the symbols.
+  "E741",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/test_*.py" = ["E501"]

@@ -36,7 +36,14 @@ N_CST = 6
 
 # Sampling bounds, section 2 of docs/DATASET-SCHEMA.md.
 BOUNDS_UPPER = [(0.08, 0.30), (0.00, 0.40), (0.00, 0.40), (0.00, 0.40), (0.00, 0.40), (0.00, 0.30)]
-BOUNDS_LOWER = [(-0.30, -0.05), (-0.40, 0.15), (-0.40, 0.15), (-0.40, 0.15), (-0.40, 0.15), (-0.25, 0.20)]
+BOUNDS_LOWER = [
+    (-0.30, -0.05),
+    (-0.40, 0.15),
+    (-0.40, 0.15),
+    (-0.40, 0.15),
+    (-0.40, 0.15),
+    (-0.25, 0.20),
+]
 ALPHA_RANGE = (-6.0, 14.0)
 ALPHAS_PER_SHAPE = 5
 
@@ -194,11 +201,30 @@ def generate(rows: int, seed: int):
             row += [round(w, 6) for w in upper]
             row += [round(w, 6) for w in lower]
             row += [round(alpha_deg, 4), REYNOLDS, MACH]
-            row += [round(geom[k], 6) for k in
-                    ("thickness_max", "thickness_max_x", "camber_max", "camber_max_x", "le_radius", "area")]
-            row += [round(aero[k], 6) for k in
-                    ("cl", "cd", "cd_pressure", "cd_friction", "cm_quarter", "cl_over_cd",
-                     "x_transition_upper", "x_transition_lower")]
+            row += [
+                round(geom[k], 6)
+                for k in (
+                    "thickness_max",
+                    "thickness_max_x",
+                    "camber_max",
+                    "camber_max_x",
+                    "le_radius",
+                    "area",
+                )
+            ]
+            row += [
+                round(aero[k], 6)
+                for k in (
+                    "cl",
+                    "cd",
+                    "cd_pressure",
+                    "cd_friction",
+                    "cm_quarter",
+                    "cl_over_cd",
+                    "x_transition_upper",
+                    "x_transition_lower",
+                )
+            ]
             row += [round(v, 5) for v in fake_cp(geom, aero["cl"])]
             row += [round(v, 5) for v in fake_pod(geom, aero["cl"])]
             row += ["ok", STUB_SOLVER_VERSION, PANEL_COUNT]
@@ -210,10 +236,14 @@ def generate(rows: int, seed: int):
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--rows", type=int, default=5000, help="number of rows to generate")
     parser.add_argument("--seed", type=int, default=20261024, help="RNG seed for reproducibility")
-    parser.add_argument("--out", type=Path, default=Path("data/sample/stub.csv"), help="output CSV path")
+    parser.add_argument(
+        "--out", type=Path, default=Path("data/sample/stub.csv"), help="output CSV path"
+    )
     args = parser.parse_args()
 
     args.out.parent.mkdir(parents=True, exist_ok=True)

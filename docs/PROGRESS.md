@@ -104,3 +104,24 @@ Chromium headless shell 156 installed locally.
 **Follow-ups.** None. Screenshot capture for the README is T4.5 and T9.2.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T0.6 Python toolchain
+
+**Done.** `pyproject.toml` for uv with numpy as the only runtime dependency and pytest plus ruff
+as the dev group; `package = false` because the tools run from the repository root as
+`python -m tools.…` rather than being installed. Package layout created for
+`tools/solver`, `tools/dataset` and `tools/train`, each with a docstring stating its remit.
+Ruff set to 100 columns with pycodestyle, pyflakes, import sorting, naming, pyupgrade, bugbear,
+simplify and ruff rules; `E741` is off because single-letter symbols are the readable choice in
+code that mirrors a textbook formula.
+
+**Verified.** `uv sync` installed numpy 2.x, pytest 9.1.1 and ruff 0.17.2. `uv run ruff check .`
+and `ruff format --check` clean. `uv run pytest` 6 passed — the tests assert the stub generator
+against `docs/DATASET-SCHEMA.md`: 194 columns in the documented order with no duplicates, the
+cosine station formula to 1e-12, trailing-edge closure, rejection of crossing surfaces, the
+leading-edge radius relation, and finite values with stagnation pressure at each nose.
+Regenerated 200 rows after formatting to confirm the script still produces 194 columns.
+
+**Follow-ups.** None. Pandas and pyarrow arrive with the dataset writer in T2.2, PyTorch in T3.2.
+
+**Commit.** see `git log`
