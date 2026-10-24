@@ -76,9 +76,21 @@
   },
   "size-limit": [
     {
-      "name": "initial bundle",
+      "name": "entry bundle",
       "path": "dist/assets/index-*.js",
-      "limit": "250 kB",
+      "limit": "100 kB",
+      "gzip": true
+    },
+    {
+      "name": "renderer chunk",
+      "path": "dist/assets/Viewport-*.js",
+      "limit": "300 kB",
+      "gzip": true
+    },
+    {
+      "name": "styles",
+      "path": "dist/assets/index-*.css",
+      "limit": "12 kB",
       "gzip": true
     }
   ]

@@ -33,5 +33,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "tests"]
+  "include": ["src"]
 }

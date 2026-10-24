@@ -55,7 +55,13 @@ export default tseslint.config(
   // out-of-bounds read behind a plausible number, and an unwrap helper per element defeats the
   // point of a tight loop. The rule stays on everywhere else, including the UI.
   {
-    files: ['src/geometry/**/*.ts', 'src/rom/**/*.ts', 'src/gpgpu/**/*.ts', 'src/ml/**/*.ts'],
+    files: [
+      'src/geometry/**/*.ts',
+      'src/rom/**/*.ts',
+      'src/gpgpu/**/*.ts',
+      'src/ml/**/*.ts',
+      'src/scene/*.ts',
+    ],
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
     },

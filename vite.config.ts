@@ -1,12 +1,14 @@
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   build: {
-    // The demo is served as a static site; keep the chunk warning low enough that
-    // an accidental dependency on something large is noticed immediately.
-    chunkSizeWarningLimit: 300,
+    // Vite's warning counts uncompressed bytes, which says little about what a visitor downloads.
+    // The real budgets are enforced by size-limit against gzip sizes; see `size-limit` in
+    // package.json. This threshold only silences a warning the renderer chunk will always trip.
+    chunkSizeWarningLimit: 1000,
   },
 })

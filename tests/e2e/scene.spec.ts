@@ -1,0 +1,58 @@
+import { expect, test } from '@playwright/test'
+
+import { LIT_CENTRE, installCanvasProbe, sampleCanvas, waitForRenderedSection } from './canvasProbe'
+
+/**
+ * Scene checks.
+ *
+ * The framebuffer is read rather than compared against a reference image: that asserts the renderer
+ * actually produced geometry, which an image comparison does not. `preserveDrawingBuffer` is on in
+ * the viewport for the same reason, so the captures committed under `docs/screenshots` contain the
+ * scene, and `playwright.config.ts` turns on ANGLE's software backend because headless Chromium has
+ * no GPU and would otherwise render nothing at all.
+ */
+
+test.describe('viewport', () => {
+  test.beforeEach(async ({ page }) => {
+    await installCanvasProbe(page)
+    await page.goto('/')
+    await expect(page.getByRole('heading', { name: 'Neural Wind Tunnel' })).toBeVisible()
+  })
+
+  test('draws the section into the canvas', async ({ page }) => {
+    // Poll rather than wait a fixed time: the first frames land whenever the GPU gets to them.
+    await waitForRenderedSection(page)
+
+    const sample = await sampleCanvas(page)
+    expect(sample?.centre, 'section is lit in the middle of the viewport').toBeGreaterThan(
+      LIT_CENTRE,
+    )
+    expect(sample?.corner, 'background stays dark in the corner').toBeLessThan(120)
+  })
+
+  test('reports the metrics of the default section', async ({ page }) => {
+    // NACA 2412 fitted to CST: 12.0 % thick at 30.8 % chord, 2.0 % camber at 42.2 % chord.
+    await expect(page.getByText('12.01 % c', { exact: true })).toBeVisible()
+    await expect(page.getByText('2.01 % c', { exact: true })).toBeVisible()
+  })
+
+  test('rebuilds geometry and metrics when a preset changes', async ({ page }) => {
+    await expect(page.getByText('12.01 % c', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'NACA 0008' }).click()
+    // A symmetric 8 % section: thinner, and with no camber left.
+    await expect(page.getByText('8.00 % c', { exact: true })).toBeVisible()
+    await expect(page.getByText('0.00 % c', { exact: true })).toBeVisible()
+  })
+
+  test('marks the section as edited once a shape control is used', async ({ page }) => {
+    await expect(page.getByText('Edited', { exact: false })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Thinner' }).click()
+    await expect(page.getByText('Edited', { exact: false })).toBeVisible()
+  })
+
+  test('captures the reference screenshot', async ({ page }) => {
+    await waitForRenderedSection(page)
+    const shot = await page.screenshot({ path: 'docs/screenshots/app-m4-shell.png' })
+    expect(shot.length).toBeGreaterThan(10_000)
+  })
+})

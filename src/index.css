@@ -1,95 +1,55 @@
-/* Minimal shell styling for M0. The design system arrives with Tailwind in T4.1. */
+@import 'tailwindcss';
+
+/*
+ * Design tokens. The palette is deliberately narrow: a near-black engineering background, three
+ * steps of grey for structure, and one accent. Colour is reserved for data -- the pressure
+ * colormap and the charts -- so the chrome never competes with the result.
+ */
+@theme {
+  --color-void: #080c11;
+  --color-base: #0b1118;
+  --color-surface: #121b25;
+  --color-raised: #182431;
+  --color-line: #22303d;
+  --color-text: #dfe7ef;
+  --color-muted: #8b9bab;
+  --color-faint: #5a6977;
+  --color-accent: #8ab4f8;
+  --color-warn: #e0a458;
+
+  --font-mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+}
 
 :root {
-  --bg: #0b1118;
-  --surface: #121b25;
-  --border: #22303d;
-  --text: #dfe7ef;
-  --text-dim: #8b9bab;
-  --accent: #8ab4f8;
-
   color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-base);
+  color: var(--color-text);
   font-family:
     ui-sans-serif,
     system-ui,
     -apple-system,
     'Segoe UI',
     sans-serif;
-  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  min-height: 100dvh;
-  background: var(--bg);
-  color: var(--text);
-}
-
-.shell {
-  max-width: 48rem;
-  margin: 0 auto;
-  padding: 4rem 1.5rem;
-}
-
-.shell__header h1 {
-  margin: 0;
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
-  letter-spacing: -0.02em;
-}
-
-.shell__tagline {
-  margin: 0.5rem 0 0;
-  color: var(--text-dim);
-}
-
-.shell__status {
-  margin-top: 2.5rem;
-  padding: 1.25rem 1.5rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-}
-
-.shell__status h2 {
-  margin: 0 0 1rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-dim);
-}
-
-.shell__status dl {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.35rem 1.5rem;
-  margin: 0 0 1rem;
-}
-
-.shell__status dt {
-  color: var(--text-dim);
-}
-
-.shell__status dd {
-  margin: 0;
+/* Numbers that change on every frame must not reflow the layout around them. */
+.tabular {
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
-.shell__status p {
-  margin: 0;
-  color: var(--text-dim);
-  font-size: 0.9rem;
-}
-
-code {
-  padding: 0.1em 0.35em;
-  background: #0b1118;
-  border: 1px solid var(--border);
-  border-radius: 0.25rem;
-  font-size: 0.9em;
-  color: var(--accent);
+input[type='range'] {
+  accent-color: var(--color-accent);
 }

@@ -36,9 +36,11 @@ test('boots with no console errors and no failed requests', async ({ page }) => 
   expect(failedRequests, 'failed requests').toEqual([])
 })
 
-test('renders the surface station grid from the schema contract', async ({ page }) => {
+test('renders the shell and its controls', async ({ page }) => {
   await page.goto('/')
 
-  await expect(page.getByTestId('station-count')).toHaveText('64')
-  await expect(page.getByTestId('station-bounds')).toHaveText('0.000 / 1.000')
+  await expect(page.getByRole('heading', { name: 'Neural Wind Tunnel' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'NACA 2412' })).toBeVisible()
+  await expect(page.getByRole('slider', { name: 'Incidence' })).toBeVisible()
+  await expect(page.locator('canvas')).toBeVisible()
 })

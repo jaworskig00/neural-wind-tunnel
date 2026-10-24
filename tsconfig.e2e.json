@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.e2e.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "esnext",
+    /* Playwright specs run in Node and drive a browser, so they need both sets of globals.
+       Keeping them out of the app project is what stops `Buffer` leaking into browser code. */
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    "moduleResolution": "bundler",
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["tests"]
+}

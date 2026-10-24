@@ -367,3 +367,41 @@ Presets changed from NACA 23012 to NACA 0008: the solver implements the four-dig
 a five-digit section needs its own camber line. `docs/PLAN.md` T4.4 updated to match.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T4.1, T4.3, T4.4, T4.5 Application shell, scene and controls
+
+**Done.** Tailwind v4 with a deliberately narrow token palette — colour is reserved for data, so the
+chrome never competes with the pressure map or the charts. A zustand store holding the twelve CST
+weights, incidence, view mode and colormap, every setter clamping to the dataset's own sampling
+bounds so the surrogate is never extrapolated. `src/geometry/shapeOps.ts` separates camber from
+thickness in weight space, which is exact because both are linear in the weights, and those same
+pure functions are what the assistant's `nudge_shape` tool will call in M8. A react-three-fiber
+viewport with the section extruded by a hand-written geometry builder that writes into preallocated
+typed arrays, an orbit camera, and the four fitted NACA presets. Playwright captures the shell
+screenshot.
+
+**Verified.** 35 unit tests, 7 end-to-end tests, lint, typecheck and build all green. Measured
+geometry in the UI matches the Python fixture: 12.01 % thickness at 30.1 % chord, 2.01 % camber at
+41.8 % chord for NACA 2412. The committed screenshot was inspected, not assumed: the first camera
+angle made the section read as a wing panel and hid the profile, so it was moved close to side-on.
+
+Bundle budgets, after splitting the renderer onto its own lazily loaded chunk: entry 72.5 kB gzip
+against a 100 kB limit, renderer 244 kB against 300 kB, stylesheet 3.4 kB against 12 kB. Three,
+react-three-fiber and drei together are 244 kB of the total, which is why the shell paints before
+they arrive. The single 250 kB budget in `docs/PLAN.md` is replaced by these three.
+
+**Follow-ups.** Three findings worth recording, all of which cost real time.
+
+`preserveDrawingBuffer` is now on in the viewport: without it a WebGL canvas composites as empty in
+every capture, and the screenshots are part of the deliverable. Headless Chromium has no GPU, so
+`playwright.config.ts` turns on ANGLE's software backend explicitly — the renderer reports
+SwiftShader through Vulkan — and without those flags the canvas renders nothing at all and every
+framebuffer read is zero. And reading the framebuffer before the renderer's first present returns
+zeros _and keeps returning zeros_ however long the poll runs, so `waitForRenderedSection` waits a
+second before its first read; both the reason and the symptom are in the comment.
+
+The preflight checklist's WebGL item is now ticked: `EXT_color_buffer_float` is available both in
+the desktop browser (Apple M4 Pro via ANGLE Metal) and in headless SwiftShader, so M6 can target the
+float render-target path rather than the fallback.
+
+**Commit.** see `git log`

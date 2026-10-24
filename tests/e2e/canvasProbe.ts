@@ -1,0 +1,74 @@
+import { type Page, expect } from '@playwright/test'
+
+/**
+ * Framebuffer sampling, injected into the page.
+ *
+ * Reading pixels back is how these tests prove the renderer produced geometry; an image comparison
+ * cannot, because a WebGL canvas can composite as empty while rendering perfectly. The function is
+ * registered with `addInitScript` so both `evaluate` and `waitForFunction` can call it without
+ * serialising a closure.
+ */
+
+export interface CanvasSample {
+  readonly centre: number
+  readonly corner: number
+}
+
+declare global {
+  interface Window {
+    __sampleCanvas?: () => CanvasSample | null
+  }
+}
+
+export async function installCanvasProbe(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    window.__sampleCanvas = () => {
+      const canvas = document.querySelector('canvas')
+      if (!canvas || canvas.width === 0) return null
+      const gl = canvas.getContext('webgl2')
+      if (!gl) return null
+      const read = (fx: number, fy: number): number => {
+        const pixel = new Uint8Array(4)
+        gl.readPixels(
+          Math.floor(fx * canvas.width),
+          Math.floor(fy * canvas.height),
+          1,
+          1,
+          gl.RGBA,
+          gl.UNSIGNED_BYTE,
+          pixel,
+        )
+        return (pixel[0] ?? 0) + (pixel[1] ?? 0) + (pixel[2] ?? 0)
+      }
+      return { centre: read(0.5, 0.5), corner: read(0.05, 0.95) }
+    }
+  })
+}
+
+/** Brightness at which the section is unambiguously drawn rather than background. */
+export const LIT_CENTRE = 150
+
+export async function sampleCanvas(page: Page): Promise<CanvasSample | null> {
+  return page.evaluate(() => window.__sampleCanvas?.() ?? null)
+}
+
+/**
+ * Waits until the renderer has put the section on screen.
+ *
+ * `expect.poll` drives this from the test side rather than `page.waitForFunction`, which polls
+ * inside the page: a predicate that calls `readPixels` from there kept returning black no matter
+ * the polling mode, while the same call through `evaluate` returns the real framebuffer every time.
+ */
+export async function waitForRenderedSection(page: Page): Promise<void> {
+  // A short settle before the first read, which is not cosmetic. Reading the framebuffer before the
+  // renderer's first present returns all zeros -- background included -- and keeps returning zeros
+  // however long the poll then runs. One second of grace and the same read returns the real frame.
+  await page.waitForTimeout(1000)
+  await expect
+    .poll(async () => (await sampleCanvas(page))?.centre ?? 0, {
+      timeout: 20_000,
+      intervals: [250, 250, 500, 500, 1000],
+      message: 'renderer never drew the section into the canvas',
+    })
+    .toBeGreaterThan(LIT_CENTRE)
+}

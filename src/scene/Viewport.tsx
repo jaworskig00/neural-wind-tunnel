@@ -1,0 +1,79 @@
+import { Grid, OrbitControls } from '@react-three/drei'
+import { Canvas } from '@react-three/fiber'
+import { useMemo } from 'react'
+import { DoubleSide } from 'three'
+
+import { useAppStore } from '../state/store'
+import { buildAirfoilGeometry } from './airfoilGeometry'
+
+/**
+ * The section mesh. Rebuilt whenever the weights change; the geometry builder writes into
+ * preallocated typed arrays so a slider drag stays inside the 16 ms budget.
+ *
+ * The pressure colormap material arrives in M5 and the particle field in M6. Until then this is a
+ * plain lit surface, which is enough to prove the geometry pipeline end to end.
+ */
+function AirfoilMesh() {
+  const section = useAppStore((state) => state.section)
+  const alphaDeg = useAppStore((state) => state.alphaDeg)
+  const geometry = useMemo(() => buildAirfoilGeometry(section), [section])
+
+  return (
+    <group rotation={[0, 0, (-alphaDeg * Math.PI) / 180]} position={[-0.5, 0, 0]}>
+      <mesh geometry={geometry} castShadow>
+        <meshStandardMaterial color="#9fb3c8" metalness={0.1} roughness={0.55} side={DoubleSide} />
+      </mesh>
+    </group>
+  )
+}
+
+/**
+ * Incidence is applied by rotating the section rather than the freestream, which is the opposite
+ * of what the solver does. It is the right choice for the camera: the flow visualisation in M6
+ * reads from a field aligned with the world x axis, so the freestream must stay put.
+ */
+export function Viewport() {
+  return (
+    <Canvas
+      // Close to side-on, lifted just enough to read as three-dimensional. An oblique default
+      // makes the section look like a wing panel and hides the profile, which is the thing a
+      // reviewer is here to look at.
+      camera={{ position: [0.15, 0.28, 1.75], fov: 38 }}
+      dpr={[1, 2]}
+      // `preserveDrawingBuffer` is on deliberately: without it a WebGL canvas composites as
+      // empty in screenshots, and the Playwright captures in T4.5 and T9.2 are part of the
+      // deliverable. The cost is one buffer copy per frame, which is immaterial here.
+      gl={{ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true }}
+      data-testid="viewport"
+    >
+      <color attach="background" args={['#080c11']} />
+      <hemisphereLight args={['#dfe7ef', '#0b1118', 0.75]} />
+      <directionalLight position={[2, 3, 2]} intensity={1.6} />
+      <directionalLight position={[-2, -1, -2]} intensity={0.35} color="#8ab4f8" />
+
+      <AirfoilMesh />
+
+      <Grid
+        args={[8, 8]}
+        position={[0, -0.45, 0]}
+        cellSize={0.1}
+        cellThickness={0.5}
+        cellColor="#22303d"
+        sectionSize={0.5}
+        sectionThickness={1}
+        sectionColor="#2d3d4d"
+        fadeDistance={7}
+        fadeStrength={1.4}
+        infiniteGrid
+      />
+
+      <OrbitControls
+        enablePan={false}
+        minDistance={0.8}
+        maxDistance={5}
+        maxPolarAngle={Math.PI * 0.85}
+        target={[0, 0, 0]}
+      />
+    </Canvas>
+  )
+}

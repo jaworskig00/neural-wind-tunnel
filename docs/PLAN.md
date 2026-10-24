@@ -22,7 +22,7 @@ The agent verifies this itself before task T0.2 and logs the result in
 - [x] Node matches `.nvmrc` (25.x) and `pnpm --version` is 10.x
 - [x] `python3 --version` is 3.12+ and `uv --version` works
 - [x] `pnpm exec playwright install chromium` succeeds
-- [ ] A WebGL2 context with `EXT_color_buffer_float` is available in headless Chromium
+- [x] A WebGL2 context with `EXT_color_buffer_float` is available in headless Chromium
       (if not: M6 tasks run with the half-float fallback path and this is noted in `docs/perf.md`)
 
 Nothing in this plan requires a paid service, an API key or a human decision.
@@ -236,11 +236,11 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 
 ### M4 — Frontend shell and geometry
 
-- [ ] **T4.1** App shell: layout with viewport, parameter panel, chart dock, header; light and dark themes; responsive down to tablet width.
+- [x] **T4.1** App shell: layout with viewport, parameter panel, chart dock, header; light and dark themes; responsive down to tablet width.
 - [x] **T4.2** `src/geometry/cst.ts`: TypeScript port of the CST evaluator; parity test against a committed Python-generated fixture within 1e-6.
-- [ ] **T4.3** R3F scene: extruded airfoil mesh rebuilt from the CST weights, orbit camera with sensible limits, neutral studio lighting, chord-aligned reference grid.
-- [ ] **T4.4** zustand store plus parameter controls: 12 CST sliders grouped into shape handles, alpha slider, NACA presets (0008, 0012, 2412, 4412; the solver implements the four-digit series only), reset, undo of the last change.
-- [ ] **T4.5** Playwright screenshot of the default state committed to `docs/screenshots/`; tag `v0.5.0-m4`.
+- [x] **T4.3** R3F scene: extruded airfoil mesh rebuilt from the CST weights, orbit camera with sensible limits, neutral studio lighting, chord-aligned reference grid.
+- [x] **T4.4** zustand store plus parameter controls: 12 CST sliders grouped into shape handles, alpha slider, NACA presets (0008, 0012, 2412, 4412; the solver implements the four-digit series only), reset, undo of the last change.
+- [x] **T4.5** Playwright screenshot of the default state committed to `docs/screenshots/`; tag `v0.5.0-m4`.
 
 **Acceptance.** Dragging a slider rebuilds the geometry inside the 16 ms budget with no visible tearing; presets load the expected shapes.
 **Verify.** Playwright screenshot diff; a performance test asserts the rebuild budget.

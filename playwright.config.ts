@@ -19,7 +19,21 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          // Headless Chromium has no GPU, so WebGL needs ANGLE's software backend explicitly.
+          // Without these the canvas renders nothing and every framebuffer read comes back zero,
+          // which would make the scene assertions untestable in CI.
+          args: [
+            '--use-gl=angle',
+            '--use-angle=swiftshader',
+            '--enable-unsafe-swiftshader',
+            '--enable-webgl',
+            '--ignore-gpu-blocklist',
+          ],
+        },
+      },
     },
   ],
   webServer: {
