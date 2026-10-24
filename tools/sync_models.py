@@ -32,6 +32,7 @@ ARTIFACTS = {
     "reference_case.json": LOCAL_MODELS,
     "pod_modes.bin": LOCAL_DATA,
     "cp_stations.json": LOCAL_DATA,
+    "solver_overlay.json": PUBLIC_MODELS,
 }
 
 #: Which Release each artifact comes from when no local build is present.
@@ -42,6 +43,7 @@ RELEASE_OF = {
     "reference_case.json": MODEL_TAG,
     "pod_modes.bin": DATASET_TAG,
     "cp_stations.json": DATASET_TAG,
+    "solver_overlay.json": MODEL_TAG,
 }
 
 

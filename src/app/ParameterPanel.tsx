@@ -96,7 +96,9 @@ export function ParameterPanel() {
           ))}
         </div>
         {presetId === null && (
-          <p className="mt-2 text-xs text-faint">Edited — no longer a stock section.</p>
+          <p className="mt-2 text-xs text-faint" data-testid="section-edited">
+            Edited — no longer a stock section.
+          </p>
         )}
       </section>
 

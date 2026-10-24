@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react'
 
 import { CpChart } from '../charts/CpChart'
+import { useSolverOverlay } from '../charts/useSolverOverlay'
 import { useSurrogate } from '../ml/useSurrogate'
 import { useAppStore } from '../state/store'
 import { HonestyBanner } from './HonestyBanner'
@@ -52,7 +53,10 @@ function Coefficient({
  */
 export function App() {
   const alphaDeg = useAppStore((state) => state.alphaDeg)
+  const presetId = useAppStore((state) => state.presetId)
   const { prediction, backend, error, loading, p95Ms } = useSurrogate()
+  const overlay = useSolverOverlay()
+  const exact = overlay.lookup(presetId, alphaDeg)
 
   return (
     <div className="flex h-full flex-col bg-base">
@@ -101,7 +105,17 @@ export function App() {
           </div>
 
           <div className="absolute right-3 bottom-3 rounded border border-line bg-surface/90 p-2">
-            <CpChart cp={prediction?.cp ?? null} />
+            <CpChart cp={prediction?.cp ?? null} reference={exact?.cp ?? null} />
+            <p className="mt-1 px-1 text-[0.65rem] text-faint">
+              {exact ? (
+                <span data-testid="overlay-active">
+                  grey: exact solver, Cl {exact.cl.toFixed(4)}
+                  {exact.cd !== null && `, Cd ${exact.cd.toFixed(5)}`}
+                </span>
+              ) : (
+                'no solver reference for an edited section'
+              )}
+            </p>
           </div>
 
           <p className="pointer-events-none absolute bottom-3 left-4 text-[0.7rem] text-faint">

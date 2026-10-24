@@ -527,3 +527,27 @@ along the scale and washed the surface out. The floor is now -2.5, chosen from t
 distribution, clamping 1.0 % of station values.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T5.5, milestone M5 closed
+
+**Done.** The pressure chart gained a hover readout and the exact solver curve behind the
+prediction. `tools/dataset/make_overlay.py` sweeps each preset across the trained incidence range
+and publishes the result with the model Release; the app draws it for a stock section and withdraws
+it once the section is edited, because a free-form shape has no reference to compare against.
+
+**Verified.** 8 end-to-end tests pass, including one asserting the overlay appears for a preset and
+goes away once edited. Read off the screen at two degrees on NACA 2412: at `x/c` 0.073 the surrogate
+gives `Cp` -0.829 against the solver's -0.840 on the upper surface, and -0.019 against -0.024 on the
+lower. Lift 0.5009 against 0.4982, drag 0.00659 against 0.00692. Those are the numbers a visitor can
+see for themselves rather than read in a claim.
+
+**Follow-ups.** The reported latency was wrong, not the latency itself. The percentile counted the
+first few predictions, which pay for a cold runtime and a cold JIT, and on a small front-loaded
+sample that turned a 0.9 ms p95 into 8.9 ms. Five warm-up predictions are now discarded before the
+figure starts counting, with the reason in the code: quoting a number nobody will see again is the
+misleading choice, not the standard one.
+
+An end-to-end test also broke on a substring: the chart's new caption mentions an edited section and
+`getByText('Edited')` then matched two elements. Both assertions now use test ids.
+
+**Commit.** see `git log`

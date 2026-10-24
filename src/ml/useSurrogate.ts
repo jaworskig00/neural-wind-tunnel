@@ -27,6 +27,17 @@ export interface SurrogateState {
 /** Latency samples kept for the percentile. Enough to be stable, small enough to stay current. */
 const LATENCY_WINDOW = 200
 
+/**
+ * Predictions ignored before the percentile starts counting.
+ *
+ * The first calls pay for a cold runtime, a cold JIT and a first texture upload, and they are not
+ * what a visitor experiences while dragging a slider. Reporting them pushed a 0.9 ms p95 up to
+ * 8.9 ms purely because the sample was small and front-loaded. Discarding the warm-up is standard
+ * practice for a latency figure; the alternative -- quoting a number nobody will ever see again --
+ * is the misleading one.
+ */
+const WARMUP_PREDICTIONS = 5
+
 export function useSurrogate(): SurrogateState {
   const section = useAppStore((state) => state.section)
   const alphaDeg = useAppStore((state) => state.alphaDeg)
@@ -42,6 +53,7 @@ export function useSurrogate(): SurrogateState {
 
   const surrogate = useRef<Surrogate | null>(null)
   const latencies = useRef<number[]>([])
+  const completed = useRef(0)
   const requestId = useRef(0)
 
   useEffect(() => {
@@ -89,10 +101,16 @@ export function useSurrogate(): SurrogateState {
         if (id !== requestId.current) return
         const elapsed = performance.now() - started
         const samples = latencies.current
-        samples.push(elapsed)
-        if (samples.length > LATENCY_WINDOW) samples.shift()
+        completed.current += 1
+        if (completed.current > WARMUP_PREDICTIONS) {
+          samples.push(elapsed)
+          if (samples.length > LATENCY_WINDOW) samples.shift()
+        }
         const sorted = [...samples].sort((a, b) => a - b)
-        const p95 = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))] ?? elapsed
+        const p95 =
+          sorted.length > 0
+            ? (sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))] ?? elapsed)
+            : elapsed
 
         setState((previous) => ({
           ...previous,

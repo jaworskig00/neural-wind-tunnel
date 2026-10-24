@@ -45,9 +45,22 @@ test.describe('viewport', () => {
   })
 
   test('marks the section as edited once a shape control is used', async ({ page }) => {
-    await expect(page.getByText('Edited', { exact: false })).toHaveCount(0)
+    // A test id rather than the text: the chart caption also mentions an edited section, and a
+    // substring match on "Edited" matched both.
+    await expect(page.getByTestId('section-edited')).toHaveCount(0)
     await page.getByRole('button', { name: 'Thinner' }).click()
-    await expect(page.getByText('Edited', { exact: false })).toBeVisible()
+    await expect(page.getByTestId('section-edited')).toBeVisible()
+  })
+
+  test('shows the exact solver curve for a preset and withdraws it once edited', async ({
+    page,
+  }) => {
+    // The overlay is the project's honesty claim made visible, so it is worth a test of its own.
+    await expect(page.getByTestId('overlay-active')).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByTestId('overlay-active')).toContainText('exact solver')
+    await page.getByRole('button', { name: 'Thinner' }).click()
+    await expect(page.getByTestId('overlay-active')).toHaveCount(0)
+    await expect(page.getByText('no solver reference')).toBeVisible()
   })
 
   test('captures the reference screenshot', async ({ page }) => {

@@ -251,7 +251,7 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 - [x] **T5.2** Pure-TS backend reading `weights.bin`: a few dozen lines of typed matmul plus SiLU, used when ORT fails or is disabled by a query flag.
 - [x] **T5.3** Parity test: ORT, TS backend and the committed Python reference case agree to 1e-4; runs in CI.
 - [x] **T5.4** Cp colormap material in GLSL on the airfoil surface, with a proper legend, a colour-blind-safe option and the sign convention stated.
-- [ ] **T5.5** D3 Cp chart with the inverted pressure axis, hover readout, and a toggle overlaying the exact solver result for the current shape where a cached solve exists.
+- [x] **T5.5** D3 Cp chart with the inverted pressure axis, hover readout, and a toggle overlaying the exact solver result for the current shape where a cached solve exists.
 - [x] **T5.6** Honesty banner in the UI linking `docs/accuracy.md`; alpha outside the trained range triggers an explicit out-of-range warning; tag `v0.6.0-m5`.
 
 **Acceptance.** Inference p95 under 5 ms measured in the browser; parity test green; the banner is visible without scrolling on first load.
