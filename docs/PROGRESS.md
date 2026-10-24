@@ -125,3 +125,21 @@ Regenerated 200 rows after formatting to confirm the script still produces 194 c
 **Follow-ups.** None. Pandas and pyarrow arrive with the dataset writer in T2.2, PyTorch in T3.2.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T0.7 GitHub Actions CI
+
+**Done.** `.github/workflows/ci.yml` with two jobs on every push to `main`, every pull request
+and manual dispatch, with in-progress runs cancelled per ref. The web job installs with a frozen
+lockfile and pnpm's cache, then runs lint, the Prettier check, typecheck, unit tests with
+coverage, the production build, the bundle budget, and the Playwright smoke suite with the
+browser binaries cached by lockfile hash; the report uploads as an artifact on failure. The
+Python job uses uv with its cache, `uv sync --locked`, ruff check, ruff format check and pytest.
+
+**Verified.** `pnpm size` reports 68.19 kB gzipped against the documented 250 kB budget (the
+check is configured for gzip so every number in the docs speaks the same unit; size-limit
+defaults to brotli). `pnpm format:check` clean across the tree including the workflow. `uv.lock`
+is committed and not ignored, so `--locked` will resolve.
+
+**Follow-ups.** The model-artifact load check joins this workflow in T3.5.
+
+**Commit.** see `git log`
