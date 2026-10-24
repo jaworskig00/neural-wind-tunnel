@@ -256,3 +256,37 @@ which brings the reported station to within about 0.01 of chord of the published
 residual is linear interpolation across 80 panels per surface in a flat region, and is not worth
 a cubic interpolator. Anyone fitting CST to a published section should expect the nose to be the
 least faithful part, which is also where a panel method is least reliable.
+
+---
+
+## ADR-014 — Verify the solver against statable truth, not remembered tables
+
+**Status.** accepted
+
+**Context.** The plan originally called for validating the inviscid solver against "published
+NACA 0012 Cp data". Bundling a digitised reference dataset means either finding one with a
+licence that permits redistribution, or transcribing numbers whose provenance cannot be stated
+in the repository. Typing in half-remembered table values and calling them published data would
+break this project's central promise.
+
+**Options.** Bundle a licensed reference dataset; cite a source and transcribe its numbers;
+verify against results that carry their own proof.
+
+**Decision.** Verify against truth that can be derived on the spot:
+
+- The exact potential-flow solution for a circle, `Cp = 1 - 4 sin^2(theta)`, including the
+  first-order grid convergence that the control-point placement predicts.
+- Thin-airfoil theory: a lift slope within 5 % of `2*pi` per radian for NACA 0004, and the
+  thickness correction `2*pi * (1 + 0.77 t/c)` matched within 1.2 % from 4 % to 18 % thickness.
+- Exact identities: zero lift and zero moment for a symmetric section at zero incidence,
+  `Cl / sin(alpha)` constant for a symmetric section, and mirror symmetry of the two surface
+  pressure distributions.
+- Internal consistency: lift from circulation and lift from pressure integration agree within
+  1 % at 320 panels and their gap halves when the panel count doubles.
+
+**Consequences.** Every assertion in `tools/solver/test_panel.py` can be justified from first
+principles by a reviewer, with no external file to trust. The trade-off is that absolute
+agreement with experiment is not asserted here; that comparison belongs with the viscous solver
+and is made qualitatively, with the discrepancy explained, in `docs/solver-validation.md`. If a
+redistributable reference dataset is added later, these tests stay as they are and the
+comparison is added alongside them.

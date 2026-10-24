@@ -182,3 +182,34 @@ rather than engineered away, since the schema fixes the weight count. A flat-pla
 case is covered so the dataset's validity filters cannot crash on it.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T1.2 and T1.3 Inviscid panel method and its verification
+
+**Done.** `tools/solver/panel.py`: linear-strength vortex panel method with continuous nodal
+strengths and the Kutta condition, influence coefficients vectorised over both panel indices,
+surface pressure, lift from circulation, lift from pressure integration as an independent
+cross-check, and the quarter-chord moment. A winding-order guard rejects a clockwise loop
+outright.
+
+**Verified.** `uv run pytest tools/solver` 38 passed. Circle against the exact solution:
+rms error 3.46e-2, 1.72e-2, 8.53e-3 at 100, 200 and 400 panels — clean first-order convergence —
+with lift and moment at 1e-13. NACA 0004 lift slope 6.4925 per radian, 3.3 % above 2*pi; the
+thickness correction `2*pi(1 + 0.77 t/c)` matched within 1.2 % from 4 % to 18 % thickness.
+`Cl / sin(alpha)` constant to nine digits for NACA 0012. NACA 2412 quarter-chord moment -0.0553
+against a published experimental -0.053. The two lift routes agree within 0.3 % at 320 panels and
+their gap halves as the panel count doubles.
+
+**Follow-ups.** Two real bugs were caught and fixed during verification, both worth recording
+because they produce plausible-looking output rather than errors. The nodal strengths are
+non-dimensionalised by `2*pi*V_inf` in this formulation, so the circulation needed that factor —
+without it lift was a factor of 2*pi low while still being perfectly linear in incidence. And the
+quarter-chord moment came out nose-up for a cambered section: the cross product gives the
+mathematically positive moment, which with x aft and y up is nose-down. The winding-order guard
+exists because a reversed loop silently solves the interior problem and returns a nearly
+motionless field; that cost twenty minutes before the shoelace area made it obvious.
+
+ADR-014 records why verification uses derivable truth rather than transcribed reference tables,
+and the T1.3 acceptance criterion in `docs/PLAN.md` was rewritten to match what is actually
+asserted.
+
+**Commit.** see `git log`
