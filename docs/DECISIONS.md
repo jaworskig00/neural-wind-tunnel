@@ -215,3 +215,44 @@ committed data is a 2000-row CSV sample for tests and for the sister project. No
 
 **Consequences.** A clean, fast clone. The app fetches artifacts from a Release URL with a local
 development fallback, and CI downloads only the small sample.
+
+---
+
+## ADR-013 — Geometry metrics use the closed-form leading-edge radius; the CST nose residual is documented, not hidden
+
+**Status.** accepted
+
+**Context.** Two numerical facts surfaced while implementing `tools/solver/geometry.py`.
+
+First, estimating the leading-edge radius from discrete coordinates by fitting `z**2 = 2 r x`
+reads about 10 % low on a symmetric section and over 30 % high on a strongly cambered one. The
+cause is geometric, not a bug: NACA thickness is applied perpendicular to the camber line, so
+the vertical gap between the surfaces near a steeply cambered nose is not twice the half
+thickness. Extrapolating `z**2 / x` to the origin fixes the symmetric case and makes the
+cambered case worse.
+
+Second, a six-weight CST fit of NACA 2412 leaves a residual of 3.1e-3 at `x = 4e-5`. The
+dataset schema fixes the order at six weights per surface, so this cannot be improved by adding
+degrees of freedom.
+
+**Options.** Raise the CST order and break the schema; implement monotone cubic interpolation
+and a smarter nose fit; use the closed form where the parametrisation provides one and document
+the fallback.
+
+**Decision.** `geometry_metrics` accepts an optional `le_radius` and every caller that knows the
+parametrisation passes the exact value — `A_0**2 / 2` for CST, `1.1019 * t**2` for NACA four
+digit. Every dataset row takes that route, so the published column is exact. The numerical
+fallback stays for arbitrary coordinates, with its bias stated in the docstring and asserted
+only within a factor of two in the tests.
+
+The CST fit residual is accepted as a property of the parametrisation, not a defect. The test
+asserts the measured bounds: below 4e-3 overall, below 1e-3 outside the first 0.5 % of chord,
+and below 3e-4 outside the first 1 %. Thickness and camber maxima survive the round trip to
+within 1e-3, which is what the surrogate actually consumes.
+
+**Consequences.** The dataset's `le_radius` column is exact rather than approximate. Thickness
+and camber extrema are refined with a parabola through the samples around the discrete maximum,
+which brings the reported station to within about 0.01 of chord of the published value — the
+residual is linear interpolation across 80 panels per surface in a flat region, and is not worth
+a cubic interpolator. Anyone fitting CST to a published section should expect the nose to be the
+least faithful part, which is also where a panel method is least reliable.

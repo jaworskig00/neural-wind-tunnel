@@ -202,7 +202,7 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 
 ### M1 — Reference solver
 
-- [ ] **T1.1** `tools/solver/geometry.py`: NACA 4-digit generator and CST (Kulfan) evaluator per `DATASET-SCHEMA.md`; cosine panel distribution; derived metrics (max thickness and its station, max camber and its station, LE radius, enclosed area). Tests: trailing-edge closure, NACA 0012 thickness within 1e-4, CST round-trip of a fitted NACA 2412 within 1e-3.
+- [x] **T1.1** `tools/solver/geometry.py`: NACA 4-digit generator and CST (Kulfan) evaluator per `DATASET-SCHEMA.md`; cosine panel distribution; derived metrics (max thickness and its station, max camber and its station, LE radius, enclosed area). Tests: trailing-edge closure, NACA 0012 thickness within 1e-4, CST round-trip of a fitted NACA 2412 within 1e-3.
 - [ ] **T1.2** `tools/solver/panel.py`: linear-strength vortex panel method with the Kutta condition; outputs surface Cp, Cl, Cm about quarter chord.
 - [ ] **T1.3** Inviscid validation: `Cl` slope within 5 % of `2*pi` per radian for a thin symmetric section; NACA 0012 Cp at alpha = 0 and 5 deg within documented tolerance of published data; zero lift at alpha = 0 for a symmetric section within 1e-6.
 - [ ] **T1.4** `tools/solver/boundary_layer.py`: Thwaites laminar, Michel transition criterion, Head's turbulent method, Squire-Young profile drag; split `cd` into pressure and friction parts; report transition locations; flag non-convergence instead of returning silent garbage.

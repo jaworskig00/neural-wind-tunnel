@@ -124,6 +124,21 @@ needs a human account, a push permission you do not have. In that case log it cl
 `docs/QUESTIONS.md`, skip to the next independent task, and continue. Never fabricate a
 measurement or a result to get past a blocker.
 
+### Never stall
+
+No single obstacle gets more than about five minutes. When something resists -- a flaky install,
+a tool that will not cooperate, a numerical detail that refuses to converge, a check that hangs --
+take one of three exits immediately:
+
+1. **Retry once** if the failure looks transient (a network blip, a rate limit, a race).
+2. **Take the simpler path** that satisfies the task's acceptance criteria, and record the
+   trade-off as an ADR in `docs/DECISIONS.md`.
+3. **Skip to the next independent task**, with the blocker written into `docs/QUESTIONS.md`.
+
+Perfecting something the acceptance criteria do not ask for is the most common way this project
+stalls. Prefer a documented approximation that is honest about its error over an undocumented
+one that is marginally better.
+
 ### CI
 
 CI must stay green. If a push turns it red, fixing it is the next task, before any new feature

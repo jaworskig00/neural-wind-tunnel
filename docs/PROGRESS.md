@@ -160,3 +160,25 @@ deferred to T6.1, where the code that needs it is written; headless Chromium's s
 measured there rather than assumed now.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T1.1 Airfoil geometry
+
+**Done.** `tools/solver/geometry.py`: cosine panel spacing, NACA four-digit sections with the
+closing `-0.1036` thickness coefficient, the CST parametrisation from `docs/DATASET-SCHEMA.md`
+section 2, a least-squares CST fit for existing coordinates, and the derived geometry metrics
+with parabolic refinement of the thickness and camber extrema. Sections are stored as a closed
+loop ordered trailing edge, upper surface, nose, lower surface, trailing edge — XFOIL's ordering,
+which the panel method will depend on.
+
+**Verified.** `uv run pytest tools/solver` 20 passed. NACA 0012 maximum thickness 0.11998
+against 0.12, inside the plan's 1e-4 criterion; thicker and cambered sections inside 3e-4. NACA
+2412 camber 0.02000 at x = 0.4026 against the designated 0.40. Leading-edge radius exact when the
+closed form is supplied: 0.01587 for a 12 % section. CST round trip of NACA 2412 within 4e-3
+overall and 1e-3 outside the first 0.5 % of chord. Ruff check and format clean.
+
+**Follow-ups.** ADR-013 records two numerical decisions: the leading-edge radius comes from the
+closed form rather than a coordinate fit, and the six-weight CST nose residual is documented
+rather than engineered away, since the schema fixes the weight count. A flat-plate degenerate
+case is covered so the dataset's validity filters cannot crash on it.
+
+**Commit.** see `git log`
