@@ -20,33 +20,49 @@ interface FrameStats {
   readonly frames: number
 }
 
+/**
+ * Frames collected per measurement.
+ *
+ * Enough for a stable median, few enough to finish on a shared runner with no GPU: at the high tier
+ * under software rendering a frame can take 100 ms, so 150 frames is fifteen seconds and a timeout.
+ */
+const FRAME_COUNT = 70
+const DISCARD = 15
+
 async function measureFrames(page: import('@playwright/test').Page): Promise<FrameStats> {
-  return page.evaluate(async () => {
-    const samples: number[] = []
-    let last = performance.now()
-    await new Promise<void>((resolve) => {
-      let count = 0
-      const tick = (): void => {
-        const now = performance.now()
-        samples.push(now - last)
-        last = now
-        count += 1
-        if (count < 150) requestAnimationFrame(tick)
-        else resolve()
+  return page.evaluate(
+    async ([frameCount, discard]) => {
+      const samples: number[] = []
+      let last = performance.now()
+      await new Promise<void>((resolve) => {
+        let count = 0
+        const tick = (): void => {
+          const now = performance.now()
+          samples.push(now - last)
+          last = now
+          count += 1
+          if (count < frameCount) requestAnimationFrame(tick)
+          else resolve()
+        }
+        requestAnimationFrame(tick)
+      })
+      // The first frames pay for shader compilation and the first texture uploads.
+      const sorted = samples.slice(discard).sort((a, b) => a - b)
+      return {
+        median: sorted[Math.floor(sorted.length * 0.5)] ?? 0,
+        p95: sorted[Math.floor(sorted.length * 0.95)] ?? 0,
+        frames: sorted.length,
       }
-      requestAnimationFrame(tick)
-    })
-    // The first frames pay for shader compilation and the first texture uploads.
-    const sorted = samples.slice(30).sort((a, b) => a - b)
-    return {
-      median: sorted[Math.floor(sorted.length * 0.5)] ?? 0,
-      p95: sorted[Math.floor(sorted.length * 0.95)] ?? 0,
-      frames: sorted.length,
-    }
-  })
+    },
+    [FRAME_COUNT, DISCARD] as const,
+  )
 }
 
 test.describe('flow field performance', () => {
+  // Serial, and with room: these run on a shared runner with no GPU, where a frame at the high
+  // tier can take a tenth of a second, and running them alongside the rest only makes that worse.
+  test.describe.configure({ mode: 'serial', timeout: 120_000 })
+
   for (const tier of ['low', 'mid', 'high'] as const) {
     test(`sustains a frame loop at the ${tier} tier`, async ({ page }) => {
       await installCanvasProbe(page)
@@ -65,7 +81,7 @@ test.describe('flow field performance', () => {
           `over ${stats.frames} frames`,
       )
 
-      expect(stats.frames, 'the frame loop keeps running').toBeGreaterThan(100)
+      expect(stats.frames, 'the frame loop keeps running').toBeGreaterThan(40)
       expect(stats.median, 'frames are not pathologically slow').toBeLessThan(400)
     })
   }

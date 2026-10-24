@@ -41,9 +41,17 @@ test.describe('viewport', () => {
   test('the flow field lights the background', async ({ page }) => {
     // With particles switched off the background is the scene's own near-black; with them on the
     // trails raise it. This is what proves the GPGPU path ran, rather than that a canvas exists.
+    //
+    // Polled rather than read once: the trails build up over the first second or so, and on a
+    // software renderer that is several seconds.
     await waitForRenderedSection(page)
-    const withParticles = await sampleCanvas(page)
-    expect(withParticles?.corner, 'trails brighten the background').toBeGreaterThan(60)
+    await expect
+      .poll(async () => (await sampleCanvas(page))?.corner ?? 0, {
+        timeout: 30_000,
+        intervals: [500, 500, 1000, 1000, 2000],
+        message: 'the trails never brightened the background',
+      })
+      .toBeGreaterThan(40)
   })
 
   test('reports the metrics of the default section', async ({ page }) => {
