@@ -16,13 +16,13 @@ The agent verifies this itself before task T0.2 and logs the result in
 [`PROGRESS.md`](PROGRESS.md). If a check fails and no sensible default fixes it, record it in
 [`QUESTIONS.md`](QUESTIONS.md) and continue with the next independent task.
 
-- [ ] `gh auth status` reports an authenticated account with `repo` scope
-- [ ] `git config user.name` and `git config user.email` are set
-- [ ] `git remote -v` points at the GitHub repo and `git push` works
-- [ ] Node matches `.nvmrc` (25.x) and `pnpm --version` is 10.x
-- [ ] `python3 --version` is 3.12+ and `uv --version` works
-- [ ] `pnpm exec playwright install chromium` succeeds
-- [ ] A WebGL2 context with `EXT_color_buffer_float` is available in headless Chromium
+- [x] `gh auth status` reports an authenticated account with `repo` scope
+- [x] `git config user.name` and `git config user.email` are set
+- [x] `git remote -v` points at the GitHub repo and `git push` works
+- [x] Node matches `.nvmrc` (25.x) and `pnpm --version` is 10.x
+- [x] `python3 --version` is 3.12+ and `uv --version` works
+- [x] `pnpm exec playwright install chromium` succeeds
+- [x] A WebGL2 context with `EXT_color_buffer_float` is available in headless Chromium
       (if not: M6 tasks run with the half-float fallback path and this is noted in `docs/perf.md`)
 
 Nothing in this plan requires a paid service, an API key or a human decision.
@@ -188,14 +188,14 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 
 ### M0 — Repository, tooling, CI
 
-- [ ] **T0.1** Repo created, MIT licence, `.gitignore`, `.editorconfig`, `.nvmrc`, planning docs committed and pushed.
+- [x] **T0.1** Repo created, MIT licence, `.gitignore`, `.editorconfig`, `.nvmrc`, planning docs committed and pushed.
 - [x] **T0.2** Vite + React + TS strict scaffold; `package.json` scripts `dev build preview lint typecheck test test:e2e format`; app renders a placeholder shell.
 - [x] **T0.3** ESLint flat config + Prettier + lint-staged + git hook; `pnpm lint` clean on a bare repo.
 - [x] **T0.4** Vitest configured with a coverage reporter and one real test (CST evaluator fixture placeholder is fine).
 - [x] **T0.5** Playwright configured; smoke test asserts the app boots with zero console errors and zero failed requests.
 - [x] **T0.6** Python env via `uv`: `pyproject.toml`, ruff, pytest, `tools/` package layout, one passing test.
 - [x] **T0.7** GitHub Actions `ci.yml`: web job (install, lint, typecheck, unit, build, e2e smoke) and python job (ruff, pytest), both cached; `size-limit` check on the bundle budget.
-- [ ] **T0.8** README skeleton with CI badge; tag `v0.1.0-m0`.
+- [x] **T0.8** README skeleton with CI badge; tag `v0.1.0-m0`.
 
 **Acceptance.** `pnpm install && pnpm dev` serves the app; `pnpm lint typecheck test build` all pass; CI is green on `main`; the badge renders.
 **Verify.** `gh run list --limit 1` shows success; Playwright smoke artifact exists.

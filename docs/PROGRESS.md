@@ -143,3 +143,20 @@ is committed and not ignored, so `--locked` will resolve.
 **Follow-ups.** The model-artifact load check joins this workflow in T3.5.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T0.8 Milestone M0 closed
+
+**Done.** `CHANGELOG.md` written for the 0.1.0-m0 release, README CI badge confirmed pointing at
+`ci.yml`, every M0 checkbox and the preflight checklist ticked in `docs/PLAN.md`.
+
+**Verified.** CI run 40058722896 is green on both jobs. The first attempt failed because
+`astral-sh/setup-uv` publishes no moving major tag, so `@v10` does not resolve; pinned to
+`v10.3.2` and re-run. Preflight confirmed on this machine: gh authenticated as jaworskig00,
+git identity set, Node 25.8.2 matching `.nvmrc`, pnpm 10.30.0, Python 3.12.12, uv 0.9.16,
+Playwright Chromium 156 installed, push to `main` working.
+
+**Follow-ups.** The WebGL2 float-render-target capability check from the preflight list is
+deferred to T6.1, where the code that needs it is written; headless Chromium's support will be
+measured there rather than assumed now.
+
+**Commit.** see `git log`
