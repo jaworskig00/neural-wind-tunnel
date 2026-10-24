@@ -59,7 +59,7 @@ test.describe('flow field performance', () => {
       await page.waitForTimeout(1500)
 
       const stats = await measureFrames(page)
-       
+
       console.log(
         `  ${tier}: median ${stats.median.toFixed(1)} ms, p95 ${stats.p95.toFixed(1)} ms ` +
           `over ${stats.frames} frames`,
