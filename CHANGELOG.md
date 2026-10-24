@@ -19,6 +19,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   -6 to +14, and the document publishes the measured per-incidence convergence rate. Amended in
   place rather than version-bumped because no dataset Release exists yet; see ADR-016.
 
+## [0.8.0-m7] - 2026-10-24
+
+Milestone M7: streamlines, polars, shareable state and the accessibility pass.
+
+### Added
+
+- Streamlines integrated on the CPU from the reconstructed velocity field and drawn as one
+  `LineSegments`, terminating on the section surface and at the domain edge.
+- Polars for Cl against incidence and Cl against drag, swept across the trained range off the
+  critical path, with the current operating point marked and the exact solver overlaid where a
+  reference exists for the section.
+- Shareable URL state per `docs/URL-STATE.md`, with notices when a link is clamped or carries a
+  version this build does not read.
+- `docs/accessibility.md` and an end-to-end accessibility suite: keyboard operation of every
+  slider, a visible focus ring, named charts, and `prefers-reduced-motion` honoured by pausing the
+  particles and drawing the field as streamlines instead.
+
+### Changed
+
+- `--color-faint` raised from `#5a6977` to `#738698`. The old value was 3.4:1 against the panel
+  background, below AA for the caption-sized text it carried. The slider track moved from the
+  structural line colour to this one so it clears 3:1 as a control.
+
 ## [0.1.0-m0] - 2026-10-24
 
 Milestone M0: the repository, the toolchain and continuous integration.
