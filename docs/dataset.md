@@ -6,15 +6,15 @@ Schema and conventions: [`DATASET-SCHEMA.md`](DATASET-SCHEMA.md). Solver accurac
 
 ## Size
 
-| | |
-|---|---|
-| Rows | 67200 |
-| Converged (`solver_status = "ok"`) | 41540 (61.8 %) |
-| Distinct shapes | 8400 |
-| Incidences per shape | 8 |
-| Solver version | 1.0.0 |
+|                                    |                |
+| ---------------------------------- | -------------- |
+| Rows                               | 67200          |
+| Converged (`solver_status = "ok"`) | 44309 (65.9 %) |
+| Distinct shapes                    | 8400           |
+| Incidences per shape               | 8              |
+| Solver version                     | 1.0.0          |
 
-Status breakdown: `ok` 41540, `bl_not_converged` 25648, `geometry_invalid` 12.
+Status breakdown: `ok` 44309, `bl_not_converged` 22875, `geometry_invalid` 16.
 
 **Only `ok` rows are valid for analysis or training.** Failures are published rather than dropped so
 the failure rate is visible; they carry `nan` for every drag column.
@@ -26,58 +26,58 @@ as the adverse gradient strengthens. This is the measured consequence, and it is
 will be weakest at the edges of the range.
 
 | `alpha_deg` | rows | converged | share |
-|---|---|---|---|
-| -6 to -4 | 8400 | 5043 | 60 % |
-| -4 to -2 | 8400 | 6284 | 75 % |
-| -2 to +0 | 8400 | 7046 | 84 % |
-| +0 to +2 | 8400 | 7086 | 84 % |
-| +2 to +4 | 8400 | 6313 | 75 % |
-| +4 to +6 | 8400 | 4911 | 58 % |
-| +6 to +8 | 8400 | 3289 | 39 % |
-| +8 to +10 | 8400 | 1568 | 19 % |
+| ----------- | ---- | --------- | ----- |
+| -6 to -4    | 8400 | 5282      | 63 %  |
+| -4 to -2    | 8400 | 6483      | 77 %  |
+| -2 to +0    | 8400 | 7237      | 86 %  |
+| +0 to +2    | 8400 | 7377      | 88 %  |
+| +2 to +4    | 8400 | 6704      | 80 %  |
+| +4 to +6    | 8400 | 5408      | 64 %  |
+| +6 to +8    | 8400 | 3785      | 45 %  |
+| +8 to +10   | 8400 | 2033      | 24 %  |
 
 ## Coverage by thickness
 
 Converged rows only.
 
-| maximum thickness | rows |
-|---|---|
-| 6 to 8 % | 1957 |
-| 8 to 10 % | 5583 |
-| 10 to 12 % | 8461 |
-| 12 to 14 % | 9236 |
-| 14 to 16 % | 8142 |
-| 16 to 18 % | 5495 |
-| 18 to 20 % | 2666 |
+| maximum thickness | rows  |
+| ----------------- | ----- |
+| 6 to 8 %          | 2154  |
+| 8 to 10 %         | 5642  |
+| 10 to 12 %        | 8886  |
+| 12 to 14 %        | 10329 |
+| 14 to 16 %        | 8882  |
+| 16 to 18 %        | 5487  |
+| 18 to 20 %        | 2929  |
 
 ## Performance envelope
 
 Converged rows only.
 
-| | minimum | median | maximum |
-|---|---|---|---|
-| `cl` | -0.9960 | +0.2692 | +1.8928 |
-| `cd` | 0.00425 | 0.00866 | 2161626759.35757 |
-| `cl_over_cd` | -133.7 | +33.4 | +168.3 |
-| `cm_quarter` | -11769.9732 | -0.0416 | +0.1095 |
+|              | minimum | median  | maximum |
+| ------------ | ------- | ------- | ------- |
+| `cl`         | -0.9772 | +0.2899 | +2.0122 |
+| `cd`         | 0.00401 | 0.00873 | 0.02121 |
+| `cl_over_cd` | -132.1  | +35.9   | +174.3  |
+| `cm_quarter` | -0.2541 | -0.0404 | +0.1172 |
 
 ## Reduced-order basis
 
-Proper orthogonal decomposition of the velocity *perturbation* fields -- the total minus the
+Proper orthogonal decomposition of the velocity _perturbation_ fields -- the total minus the
 freestream, with the body zeroed. See ADR-007 and `tools/dataset/pod.py`.
 
 | modes | variance captured |
-|---|---|
-| 1 | 83.916 % |
-| 2 | 86.911 % |
-| 4 | 91.729 % |
-| 8 | 95.284 % |
-| 16 | 97.101 % |
-| 32 | 98.257 % |
+| ----- | ----------------- |
+| 1     | 84.019 %          |
+| 2     | 87.548 %          |
+| 4     | 92.008 %          |
+| 8     | 95.444 %          |
+| 16    | 97.226 %          |
+| 32    | 98.337 %          |
 
 Reconstruction against every row in the dataset, not just the subsample the basis was built from:
 relative rms error **10.11 %**, worst single row
-**31.8 %**.
+**30.7 %**.
 
 That single figure is misleading on its own, so here is where the error actually sits. The section
 covers a different set of grid points in every row, which makes the masked body a moving
@@ -86,11 +86,11 @@ discontinuity -- exactly the structure a linear basis cannot compress. Split by 
 
 "Near the section" means `-0.08 < x/c < 1.08` and `abs(y/c) < 0.14`.
 
-| region | grid points | relative rms error |
-|---|---|---|
-| Everywhere | 18432 | 9.84 % |
-| Near the section | 1332 | 17.7 % |
-| Away from the section | 17100 | 1.14 % |
+| region                | grid points | relative rms error |
+| --------------------- | ----------- | ------------------ |
+| Everywhere            | 18432       | 9.93 %             |
+| Near the section      | 1332        | 17.8 %             |
+| Away from the section | 17100       | 1.14 %             |
 
 Over the 93 % of the domain the particles and
 streamlines actually traverse, the reconstruction is accurate to about one per cent of the

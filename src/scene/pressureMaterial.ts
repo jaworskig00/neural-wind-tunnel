@@ -10,22 +10,10 @@
 import { DataTexture, FloatType, NearestFilter, RedFormat, ShaderMaterial } from 'three'
 
 import { CP_STATION_COUNT } from '../ml/types'
+import { COLORMAP_INDEX, type ColormapName, PRESSURE_RANGE } from './pressureScale'
 import fragmentShader from '../shaders/pressure.frag?raw'
 import vertexShader from '../shaders/pressure.vert?raw'
 import { resolveIncludes } from '../shaders/include'
-
-export type ColormapName = 'coolwarm' | 'cividis'
-
-const COLORMAP_INDEX: Readonly<Record<ColormapName, number>> = { coolwarm: 0, cividis: 1 }
-
-/**
- * Fixed pressure range for the colour scale.
- *
- * Fixed, not auto-scaled: a scale that rescales itself as the shape changes makes two states
- * impossible to compare, which defeats the purpose. The range covers stagnation at the top and a
- * strong suction peak at the bottom; anything beyond it clamps, and the legend says so.
- */
-export const PRESSURE_RANGE = { min: -4, max: 1 } as const
 
 export interface PressureMaterialHandle {
   readonly material: ShaderMaterial

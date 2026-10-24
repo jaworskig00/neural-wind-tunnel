@@ -1,9 +1,10 @@
 /**
  * Backend selection.
  *
- * ONNX Runtime Web is the default and the hand-written TypeScript pass is the fallback, chosen in
- * that order for the reasons in ADR-006. `?backend=typescript` forces the fallback, which is how the
- * parity test exercises both without rebuilding.
+ * The hand-written TypeScript pass is the default and ONNX Runtime Web is opt-in, which inverts
+ * what ADR-006 originally planned: measured on the same sweep the hand-written pass is twice as
+ * fast and saves 6.8 MB of gzipped WebAssembly, and a parity test holds the two to 1e-4. ONNX
+ * remains the canonical exported artifact. ADR-021 records the measurement and the reversal.
  */
 
 import { OnnxBackend, loadOnnxBackend } from './onnxBackend'
@@ -66,14 +67,14 @@ export async function loadTypeScriptBackend(sources: SurrogateSources): Promise<
 }
 
 /**
- * Loads the preferred backend, falling back rather than failing.
+ * Loads the requested backend, falling back rather than failing.
  *
  * A reviewer on a browser where the WebAssembly runtime will not start should still see the app
- * work, so a failure here is reported and the fallback takes over.
+ * work, so a failure in the ONNX path is reported and the hand-written pass takes over.
  */
 export async function createBackend(
   sources: SurrogateSources,
-  preferred: BackendName = 'onnx',
+  preferred: BackendName = 'typescript',
 ): Promise<Surrogate> {
   if (preferred === 'typescript') {
     return loadTypeScriptBackend(sources)

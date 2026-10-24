@@ -21,7 +21,8 @@ from pathlib import Path
 LOCAL_MODELS = Path("models")
 LOCAL_DATA = Path("data/generated")
 PUBLIC_MODELS = Path("public/models")
-RELEASE_TAG = "dataset-v1"
+DATASET_TAG = "dataset-v1"
+MODEL_TAG = "model-v1"
 
 #: What the app needs, and where a local build leaves each one.
 ARTIFACTS = {
@@ -33,8 +34,15 @@ ARTIFACTS = {
     "cp_stations.json": LOCAL_DATA,
 }
 
-#: Artifacts the Release carries. The model itself is published with its own tag once trained.
-RELEASE_ARTIFACTS = {"pod_modes.bin", "cp_stations.json"}
+#: Which Release each artifact comes from when no local build is present.
+RELEASE_OF = {
+    "surrogate.onnx": MODEL_TAG,
+    "weights.bin": MODEL_TAG,
+    "manifest.json": MODEL_TAG,
+    "reference_case.json": MODEL_TAG,
+    "pod_modes.bin": DATASET_TAG,
+    "cp_stations.json": DATASET_TAG,
+}
 
 
 def copy_local(name: str, source_directory: Path) -> bool:
@@ -45,8 +53,9 @@ def copy_local(name: str, source_directory: Path) -> bool:
     return True
 
 
-def download_from_release(name: str, tag: str) -> bool:
-    if name not in RELEASE_ARTIFACTS:
+def download_from_release(name: str, tag: str | None = None) -> bool:
+    tag = tag or RELEASE_OF.get(name)
+    if tag is None:
         return False
     result = subprocess.run(
         [
@@ -75,7 +84,7 @@ def main() -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("--release", action="store_true", help="ignore local builds")
-    parser.add_argument("--tag", default=RELEASE_TAG)
+    parser.add_argument("--tag", default=None, help="override the Release each artifact comes from")
     args = parser.parse_args()
 
     PUBLIC_MODELS.mkdir(parents=True, exist_ok=True)

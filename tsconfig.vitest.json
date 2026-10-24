@@ -7,7 +7,10 @@
     "types": ["vite/client", "node"],
     "composite": true
   },
-  "include": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+  /* The whole of `src`, not just the test files: a test imports the module it covers, and a
+     composite project has to list every file it pulls in. The app project still excludes the
+     tests, so browser code is typechecked without Node globals in scope. */
+  "include": ["src"],
   /* `exclude` is inherited from the app project, where it removes exactly these files. Without
      clearing it here the two cancel out and tsc reports no inputs at all. */
   "exclude": []

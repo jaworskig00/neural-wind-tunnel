@@ -26,6 +26,18 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Fetch the published model artifacts
+        # From the Releases, not the repository: generated artifacts are not committed (ADR-012).
+        # The parity test and the end-to-end suite both need them present.
+        run: uv run python tools/sync_models.py --release
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Lint
         run: pnpm lint
 
@@ -64,6 +76,30 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  model:
+    name: Model artifact
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Sync environment
+        run: uv sync --locked
+
+      - name: Fetch the published model
+        run: uv run python tools/sync_models.py --release
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Reference case reproduces
+        # Holds both the ONNX graph and the raw weight blob to the committed reference outputs, and
+        # bounds the predictions physically, so a numerically faithful but absurd model still fails.
+        run: uv run python -m tools.train.check_artifact --models public/models
 
   python:
     name: Python

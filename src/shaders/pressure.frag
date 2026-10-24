@@ -23,10 +23,20 @@ void main() {
   float coordinate = pressureTexelCoordinate(vChord, vSurface);
   float cp = texture2D(uPressure, vec2(coordinate, 0.5)).r;
 
-  // Normalised with the suction end at 0 so the colormap's cool end means low pressure, which is the
-  // convention a reader expects.
-  float t = clamp((uPressureMax - cp) / max(uPressureMax - uPressureMin, 1e-5), 0.0, 1.0);
-  vec3 colour = uColormap == 1 ? colormapCividis(t) : colormapCoolwarm(1.0 - t);
+  // A diverging map has to diverge about something meaningful, and that is Cp = 0 -- the freestream
+  // pressure -- not the midpoint of the chosen range. Mapping linearly over [-4, 1] instead puts the
+  // neutral colour at Cp = -1.5, which is inside the ordinary working range of these sections, so a
+  // typical distribution came out uniformly warm and read as a solid colour rather than as data.
+  // Suction below zero runs to the cool end, compression above it to the warm end, freestream white.
+  float diverging = cp < 0.0
+      ? 0.5 * (1.0 - clamp(cp / uPressureMin, 0.0, 1.0))
+      : 0.5 + 0.5 * clamp(cp / uPressureMax, 0.0, 1.0);
+
+  // Cividis is sequential, so it gets a plain linear map over the range; forcing a midpoint on it
+  // would imply a divergence the colormap cannot express.
+  float sequential = clamp((cp - uPressureMin) / max(uPressureMax - uPressureMin, 1e-5), 0.0, 1.0);
+
+  vec3 colour = uColormap == 1 ? colormapCividis(sequential) : colormapCoolwarm(diverging);
 
   vec3 normal = normalize(vNormal);
   vec3 viewDirection = normalize(vViewPosition);

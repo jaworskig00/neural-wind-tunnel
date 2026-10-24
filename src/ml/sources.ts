@@ -7,8 +7,8 @@
  * request, no dependency on GitHub being reachable at run time, and the production build is a plain
  * static directory.
  *
- * `?backend=typescript` forces the hand-written fallback, which is how the parity test exercises
- * both backends against one build.
+ * `?backend=onnx` opts into ONNX Runtime Web. The hand-written pass is the default; ADR-021 has the
+ * measurements behind that.
  */
 
 import type { BackendName, SurrogateSources } from './index'
@@ -33,7 +33,14 @@ export function podAtlasUrl(): string {
   return `${base()}${MODEL_DIRECTORY}pod_modes.bin`
 }
 
-/** Backend requested by the URL, if any. */
+/**
+ * Backend requested by the URL, defaulting to the hand-written pass.
+ *
+ * Measured on the same sixty-step incidence sweep: the TypeScript forward pass runs at 0.9 ms p95
+ * against ONNX Runtime Web's 1.9 ms, and costs 6.8 MB less gzipped WebAssembly. ONNX stays the
+ * canonical exported artifact and a parity test holds the two to 1e-4 of each other, so this is a
+ * delivery choice, not a retreat from the format. See ADR-021.
+ */
 export function requestedBackend(search: string = window.location.search): BackendName {
-  return new URLSearchParams(search).get('backend') === 'typescript' ? 'typescript' : 'onnx'
+  return new URLSearchParams(search).get('backend') === 'onnx' ? 'onnx' : 'typescript'
 }

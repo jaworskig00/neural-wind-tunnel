@@ -482,12 +482,12 @@ fine — lift came out with a mean absolute error of 0.0062 — and the targets 
 Two separate defects, both of the same shape as ADR-018: a plausible-looking column full of
 nonsense.
 
-* **The moment inherited the trailing-edge singularity.** ADR-018 excluded the singular control
-  points from the *reported pressure stations* but not from the force and moment integrals, and the
+- **The moment inherited the trailing-edge singularity.** ADR-018 excluded the singular control
+  points from the _reported pressure stations_ but not from the force and moment integrals, and the
   moment amplifies them because the lever arm at the trailing edge is three quarters of a chord.
   Result: 360 converged rows, 0.87 % of them, with a quarter-chord moment outside ±0.3, the worst at
   -11 770, against a 99.99th percentile of 0.103.
-* **The viscous march could diverge while reporting success.** Forward Euler on the momentum
+- **The viscous march could diverge while reporting success.** Forward Euler on the momentum
   equation can run away before the shape factor reaches the separation threshold. Two rows had a
   drag above 0.05 and one reached 2.2e9, against a 99.99th percentile of 0.0296.
 
@@ -517,7 +517,7 @@ chord rather than all of it, which is a documented approximation belonging with 
 
 **Addendum, found by the assertion itself.** The first regeneration under this ADR failed its own
 new check: two converged rows still carried a drag of 2.2e9. The momentum-thickness bound and the
-trailing-edge cut-off had both been added inside the *turbulent* branch of the march, and these two
+trailing-edge cut-off had both been added inside the _turbulent_ branch of the march, and these two
 rows took the fully-laminar return path, which reported from the branch end where the inviscid edge
 velocity is collapsing -- 26 663, raised to the power 3.6 by Squire-Young. The cut-off station is
 now computed once, before the march branches, and every return path reports from it. The assertion
@@ -528,3 +528,38 @@ returned entirely different geometries under the same seed, because the Sobol bl
 from the requested count. A shape id therefore meant nothing outside the run that produced it, which
 made the first attempt to reproduce the failing rows reproduce different rows instead. The block is
 now a fixed 4096, so a smaller request is a prefix of a larger one.
+
+---
+
+## ADR-021 — The hand-written forward pass is the default; ONNX Runtime Web is opt-in
+
+**Status.** accepted, supersedes the delivery half of ADR-006
+
+**Context.** ADR-006 shipped two inference backends and made ONNX Runtime Web the default, with the
+hand-written TypeScript pass as a fallback and a parity reference. With both working against the
+trained model, they could finally be measured rather than assumed.
+
+**Measurement.** On the same sixty-step incidence sweep in the same browser:
+
+|                              | p95 latency | transferred                                      |
+| ---------------------------- | ----------- | ------------------------------------------------ |
+| Hand-written TypeScript pass | **0.9 ms**  | 0.7 MB weight blob                               |
+| ONNX Runtime Web, wasm       | 1.9 ms      | 0.7 MB model **plus 6.8 MB gzipped WebAssembly** |
+
+Both are inside the 5 ms budget. The runtime is twice as slow and costs every visitor 6.8 MB of
+compressed WebAssembly — for a 177 000-parameter multilayer perceptron, which is four matrix-vector
+products.
+
+**Decision.** Default to the hand-written pass. `?backend=onnx` opts into the runtime, and the app
+falls back to the hand-written path if the runtime fails to start.
+
+ONNX remains the canonical exported artifact: it is what `tools/train/export.py` produces first,
+what `tools/train/check_artifact.py` validates, and what anyone reusing the model would take. The
+parity test holds the two to 1e-4 of each other and to the Python original, so this is a delivery
+choice about what a visitor downloads, not a retreat from the format.
+
+**Consequences.** A visitor downloads 0.7 MB instead of 7.5 MB and gets a faster response. The
+README has to be clear that both paths exist and why the lighter one is default, because
+"ONNX Runtime Web in the browser" is a claim the project makes and it must not read as unsupported.
+The reversal is itself worth showing: shipping both and measuring is the point, and the measurement
+disagreed with the plan.

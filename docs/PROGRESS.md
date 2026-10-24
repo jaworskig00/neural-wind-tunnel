@@ -484,3 +484,46 @@ pre-commit hook twice; that commit was made with the hook skipped after running 
 vitest by hand, and the commit message says so.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — M3 closed: the surrogate is trained, exported, measured and published
+
+**Done.** Trained on the regenerated dataset, exported to ONNX and to a flat float32 blob, measured
+against the solver on held-out sections, and published as the `model-v1` Release. `docs/accuracy.md`
+is generated from the data. CI gained a job that fetches the published artifacts and asserts they
+still reproduce the committed reference case.
+
+**Verified.** 177 059 parameters, 0.71 MB. On sections the model has never seen at any incidence:
+
+| output | mean absolute error | R-squared |
+|---|---|---|
+| `cl` | 0.0095 | 0.996 |
+| `cd` | 0.00020 | 0.969 |
+| `cm_quarter` | 0.0014 | 0.982 |
+
+Pressure rms 0.055 over 128 stations, modal coefficients 6.0 % relative. ONNX agrees with PyTorch
+to 5.5e-6 and the raw blob to 4.3e-6, both far inside the 1e-4 tolerance. In the app at two degrees,
+NACA 2412 predicts `Cl` 0.5009 and `Cd` 0.00659 against the solver's own 0.50 — checked in a browser,
+not inferred.
+
+**Follow-ups.** Three findings worth recording.
+
+The first run reported `cd` between -29 144 and 108 549 on held-out rows while `cl` had a mean error
+of 0.0062. The model was right and the targets were wrong; that trail led to ADR-020.
+
+Training under squared error made the model improve on 99 % of rows while getting steadily worse on
+the extreme 1 % — untrimmed validation loss tripled while the trimmed figure fell. The targets are
+heavy-tailed, and squared error is the wrong loss for that. Huber fixed it outright: train 0.0016,
+validation 0.0042, test 0.0056, no divergence.
+
+And the measurement that reversed a plan: the hand-written TypeScript forward pass runs at **0.9 ms
+p95** against ONNX Runtime Web's **1.9 ms**, and saves **6.8 MB of gzipped WebAssembly**. The
+hand-written pass is now the default and the runtime is opt-in; ONNX stays the canonical artifact and
+the parity test holds them to 1e-4. ADR-021 records it.
+
+Two smaller fixes found by looking at the screen rather than at a test: the diverging colormap was
+centred on the midpoint of its range instead of on `Cp = 0`, so a typical distribution came out
+uniformly warm; and the suction floor was -4, which left the median suction peak a fifth of the way
+along the scale and washed the surface out. The floor is now -2.5, chosen from the dataset's own
+distribution, clamping 1.0 % of station values.
+
+**Commit.** see `git log`

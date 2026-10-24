@@ -35,10 +35,7 @@ function load(): { reference: ReferenceCase; backend: TypeScriptBackend } | null
       readFileSync('public/models/manifest.json', 'utf8'),
     ) as WeightManifest
     const blob = readFileSync('public/models/weights.bin')
-    const buffer = blob.buffer.slice(
-      blob.byteOffset,
-      blob.byteOffset + blob.byteLength,
-    ) as ArrayBuffer
+    const buffer = blob.buffer.slice(blob.byteOffset, blob.byteOffset + blob.byteLength)
     return { reference, backend: new TypeScriptBackend(parseWeights(buffer, manifest)) }
   } catch {
     return null

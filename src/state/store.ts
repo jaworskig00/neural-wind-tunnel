@@ -8,6 +8,8 @@
 
 import { create } from 'zustand'
 
+import type { ColormapName } from '../scene/pressureScale'
+
 import { DEFAULT_PRESET_ID, presetById } from '../geometry/presets'
 import {
   type Section,
@@ -31,7 +33,7 @@ function clampWeight(
 }
 
 export type ViewMode = 'particles' | 'streamlines' | 'both' | 'surface'
-export type Colormap = 'coolwarm' | 'cividis'
+export type { ColormapName as Colormap } from '../scene/pressureScale'
 
 export interface AppState {
   readonly section: Section
@@ -39,7 +41,7 @@ export interface AppState {
   readonly presetId: string | null
   /** Set when the current section came from a preset and has not been edited since. */
   readonly view: ViewMode
-  readonly colormap: Colormap
+  readonly colormap: ColormapName
 
   setUpperWeight: (index: number, value: number) => void
   setLowerWeight: (index: number, value: number) => void
@@ -50,7 +52,7 @@ export interface AppState {
   nudgeCamber: (factor: number) => void
   addCamber: (amount: number) => void
   setView: (view: ViewMode) => void
-  setColormap: (colormap: Colormap) => void
+  setColormap: (colormap: ColormapName) => void
   reset: () => void
 }
 

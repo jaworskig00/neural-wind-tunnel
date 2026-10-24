@@ -60,10 +60,22 @@ export async function sampleCanvas(page: Page): Promise<CanvasSample | null> {
  * the polling mode, while the same call through `evaluate` returns the real framebuffer every time.
  */
 export async function waitForRenderedSection(page: Page): Promise<void> {
-  // A short settle before the first read, which is not cosmetic. Reading the framebuffer before the
+  // A settle before the first read, which is not cosmetic. Reading the framebuffer before the
   // renderer's first present returns all zeros -- background included -- and keeps returning zeros
-  // however long the poll then runs. One second of grace and the same read returns the real frame.
-  await page.waitForTimeout(1000)
+  // however long the poll then runs, so the first read has to happen after a real frame. Waiting on
+  // two animation frames is the signal; the timeout that follows is headroom for a loaded machine,
+  // where one second alone proved flaky.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            resolve()
+          }),
+        )
+      }),
+  )
+  await page.waitForTimeout(1500)
   await expect
     .poll(async () => (await sampleCanvas(page))?.centre ?? 0, {
       timeout: 20_000,
