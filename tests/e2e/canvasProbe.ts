@@ -19,11 +19,23 @@ export interface CanvasSample {
 declare global {
   interface Window {
     __sampleCanvas?: () => CanvasSample | null
+    /** Frames the page has presented since load. */
+    __frames?: number
   }
 }
 
 export async function installCanvasProbe(page: Page): Promise<void> {
   await page.addInitScript(() => {
+    // A frame counter, so tests can wait for frames rather than for wall-clock time. Reading the
+    // framebuffer before the first present returns zeros and keeps returning them, and "wait a
+    // second" is not a frame on a runner without a GPU, where one frame can take half of one.
+    window.__frames = 0
+    const count = (): void => {
+      window.__frames = (window.__frames ?? 0) + 1
+      requestAnimationFrame(count)
+    }
+    requestAnimationFrame(count)
+
     window.__sampleCanvas = () => {
       const canvas = document.querySelector('canvas')
       if (!canvas || canvas.width === 0) return null

@@ -66,6 +66,18 @@ This is the measurement that justifies the tiering. On a software renderer the l
 34 ms with a p95 three times that, which is the signature of frames that occasionally take far
 longer than the rest.
 
+## A GitHub runner, no GPU, shared cores
+
+The same spec, on the machine continuous integration happens to get.
+
+| Tier | Particles | Median frame |
+| ---- | --------- | ------------ |
+| high | 1 048 576 | 510 ms       |
+
+Two frames per second. This is not a defect to fix, it is the floor the tiering exists for, and it
+is why the end-to-end suite asserts only that the loop keeps producing frames rather than any
+threshold on the median. A pass or fail on a shared runner's frame time measures the runner.
+
 ## Choosing a tier
 
 The capability check is only a first guess: it reports what the hardware claims to support, which
