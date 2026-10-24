@@ -95,7 +95,8 @@ def main() -> int:
         print(
             "\nmissing artifacts: "
             + ", ".join(missing)
-            + "\nrun `uv run python -m tools.train.train && uv run python -m tools.train.export` first",
+            + "\nrun `uv run python -m tools.train.train` then "
+            + "`uv run python -m tools.train.export` first",
             file=sys.stderr,
         )
         return 1

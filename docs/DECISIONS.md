@@ -432,3 +432,38 @@ The cost is real: the pressure recovery over the last two per cent of chord is f
 trailing-edge pressure in both the dataset and the app is held rather than resolved. Resolving it
 properly needs viscous-inviscid coupling, which is out of scope. This limit belongs in
 `docs/accuracy.md` and in the README's honesty section alongside the others.
+
+---
+
+## ADR-019 — A non-physical inviscid suction peak invalidates the row
+
+**Status.** accepted
+
+**Context.** With the trailing-edge singularity fixed (ADR-018), the pressure columns still carried
+a tail: the worst sampled section reaches a pressure coefficient of -155, which means a local
+velocity twelve times the freestream. That is not a bug in the panel method — the potential-flow
+solution really is singular at a near-cusp leading edge — but it is not a flow this project can
+claim to model, and a single target of -155 against a typical range of -4 to 1 would distort the
+output normalisation and the loss.
+
+**Measurement first.** Across the 67 200 rows the tail falls away smoothly: 1.2 % of rows go below
+a peak of -10, 0.13 % below -15, 0.024 % below -20 and 0.018 % below -25. Those last twelve rows
+come from four sections, and eleven of the twelve were already `bl_not_converged`.
+
+**Decision.** Reject a row whose inviscid suction peak falls below -25 by marking it
+`geometry_invalid` — the status the schema already reserves for geometry that cannot be solved
+meaningfully — and nulling its drag columns. The floor is set where the measured tail thins to a
+handful of sections rather than at a round number chosen in advance. Rows between -25 and -10 are
+kept: they are extreme but they are the model's job to learn.
+
+The rule lives in one function, `tools.solver.solve.pressure_is_physical`. `solve` applies it so a
+fresh run never writes such a row as converged, and `tools.dataset.build` applies the same function
+when assembling, so a dataset solved before the gate existed is corrected without a
+twenty-five-minute re-solve. One rule, two callers, no second definition to drift.
+
+**Consequences.** Twelve rows re-marked. Converged rows now span a pressure coefficient of -19.67 to
+1.0000, with 41 540 of them — still above the 40 000 the plan asks for. The output normalisation is
+left as mean and standard deviation rather than something percentile-based: with the gate in place
+the remaining tail is about ten times the typical magnitude, not a hundred, and robust scaling would
+be a second mechanism solving a problem the gate already solved. If the accuracy report shows
+particular pressure stations fitting badly, that is the place to revisit it.

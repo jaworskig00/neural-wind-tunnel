@@ -36,6 +36,22 @@ class SolverStatus(StrEnum):
     GEOMETRY_INVALID = "geometry_invalid"
 
 
+#: Suction floor below which the inviscid solution is rejected as non-physical.
+#:
+#: A pressure coefficient of -25 means a local velocity five times the freestream. A panel method
+#: will happily produce far more at a near-cusp leading edge, where the potential-flow solution is
+#: genuinely singular -- the worst sampled section reaches -155 -- but that is not a flow this
+#: project can claim to model. Measured across the dataset the tail falls away smoothly: 1.2 % of
+#: rows go below -10, 0.13 % below -15 and 0.018 % below -25, and those last twelve rows come from
+#: just four sections. Everything above the floor is kept; see ADR-019.
+CP_SUCTION_FLOOR = -25.0
+
+
+def pressure_is_physical(cp_stations: Array) -> bool:
+    """False when the inviscid suction peak is beyond anything this method can be trusted for."""
+    return bool(np.nanmin(cp_stations) >= CP_SUCTION_FLOOR)
+
+
 @dataclass(frozen=True)
 class SolverResult:
     """One solved flow condition. Maps one-to-one onto a dataset row."""
@@ -173,7 +189,12 @@ def solve(
     lower_bl = march_surface(lower_s, lower_station, lower_ue, reynolds)
     upper_bl = march_surface(upper_s, upper_station, upper_ue, reynolds)
 
-    if lower_bl.status is SurfaceStatus.OK and upper_bl.status is SurfaceStatus.OK:
+    if not pressure_is_physical(np.concatenate([cp_upper, cp_lower])):
+        # Rejected before the viscous result is even considered: if the inviscid pressure is
+        # meaningless then so is everything built on it.
+        status = SolverStatus.GEOMETRY_INVALID
+        cd = cd_friction = cd_pressure = float("nan")
+    elif lower_bl.status is SurfaceStatus.OK and upper_bl.status is SurfaceStatus.OK:
         status = SolverStatus.OK
         cd = lower_bl.cd_squire_young + upper_bl.cd_squire_young
         cd_friction = _friction_drag(panel, (lower_bl, upper_bl), alpha_deg)

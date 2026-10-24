@@ -39,7 +39,7 @@ from tools.dataset.run import DEFAULT_OUTPUT, SOLVER_VERSION, load_tables
 from tools.dataset.sample import ALPHA_BOUNDS, LOWER_BOUNDS, UPPER_BOUNDS
 from tools.solver.field import GRID_NX, GRID_NY, GRID_X_RANGE, GRID_Y_RANGE
 from tools.solver.geometry import CST_ORDER, cst_metrics
-from tools.solver.solve import cp_stations
+from tools.solver.solve import SolverStatus, cp_stations, pressure_is_physical
 
 SCHEMA_VERSION = 1
 DATASET_VERSION = "dataset-v1"
@@ -92,6 +92,25 @@ def recompute_geometry(frame: pd.DataFrame) -> pd.DataFrame:
     for index, column in enumerate(GEOMETRY_COLUMNS):
         frame[column] = table[:, index]
     return frame
+
+
+def gate_non_physical_pressure(frame: pd.DataFrame) -> int:
+    """Re-mark rows whose inviscid suction peak is beyond the physical floor.
+
+    The gate lives in `tools.solver.solve.pressure_is_physical` and is applied there, so a fresh run
+    never writes such a row as converged. It is applied again here because a dataset solved before
+    the gate existed should not need a twenty-five-minute re-solve to be corrected: one rule, two
+    callers, no second definition. Returns how many rows were re-marked.
+    """
+    columns = [column for column in frame.columns if column.startswith("cp_")]
+    peaks = frame[columns].to_numpy()
+    offending = ~np.array([pressure_is_physical(row) for row in peaks])
+    if not offending.any():
+        return 0
+    frame.loc[offending, "solver_status"] = SolverStatus.GEOMETRY_INVALID.value
+    for column in ("cd", "cd_pressure", "cd_friction", "cl_over_cd"):
+        frame.loc[offending, column] = np.nan
+    return int(offending.sum())
 
 
 def checksum(path: Path) -> str:
@@ -259,7 +278,12 @@ def main() -> int:
     print("loading shard tables", flush=True)
     frame = load_tables(args.output)
     frame = recompute_geometry(frame)
-    print(f"  {len(frame)} rows, {frame['shape_id'].nunique()} shapes", flush=True)
+    gated = gate_non_physical_pressure(frame)
+    print(
+        f"  {len(frame)} rows, {frame['shape_id'].nunique()} shapes, "
+        f"{gated} re-marked as geometry_invalid",
+        flush=True,
+    )
 
     field_paths = sorted((args.output / "shards").glob("shard_*.f16.npy"))
     print(f"building the basis from {len(field_paths)} field shards", flush=True)

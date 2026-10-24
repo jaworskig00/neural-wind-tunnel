@@ -128,3 +128,35 @@ class TestPressureIsPhysical:
         result = solve(naca4("2412", panel_count=200), 4.0)
         assert abs(result.cp_upper[-1] - result.cp_upper[-2]) < 0.1
         assert abs(result.cp_lower[-1] - result.cp_lower[-2]) < 0.1
+
+
+class TestPhysicalPressureGate:
+    """ADR-019: an inviscid suction peak beyond the floor invalidates the row, not just the drag."""
+
+    def test_the_floor_is_where_the_measured_tail_thins_out(self) -> None:
+        from tools.solver.solve import CP_SUCTION_FLOOR
+
+        assert CP_SUCTION_FLOOR == -25.0
+
+    def test_accepts_an_ordinary_distribution(self) -> None:
+        from tools.solver.solve import pressure_is_physical
+
+        assert pressure_is_physical(solve(naca4("2412", panel_count=200), 4.0).cp_stations)
+
+    def test_rejects_a_peak_beyond_the_floor(self) -> None:
+        from tools.solver.solve import pressure_is_physical
+
+        stations = np.full(128, -1.0)
+        assert pressure_is_physical(stations)
+        stations[17] = -25.5
+        assert not pressure_is_physical(stations)
+
+    def test_a_rejected_row_reports_geometry_invalid_and_no_drag(self, monkeypatch) -> None:
+        import tools.solver.solve as solve_module
+
+        monkeypatch.setattr(solve_module, "CP_SUCTION_FLOOR", 0.0)
+        result = solve_module.solve(naca4("2412", panel_count=200), 4.0)
+        assert result.status is SolverStatus.GEOMETRY_INVALID
+        assert math.isnan(result.cd)
+        # The inviscid pressure and lift are still returned; the status says not to trust them.
+        assert np.all(np.isfinite(result.cp_stations))

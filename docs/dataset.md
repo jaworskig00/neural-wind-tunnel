@@ -6,15 +6,15 @@ Schema and conventions: [`DATASET-SCHEMA.md`](DATASET-SCHEMA.md). Solver accurac
 
 ## Size
 
-|                                    |                |
-| ---------------------------------- | -------------- |
-| Rows                               | 67200          |
-| Converged (`solver_status = "ok"`) | 41541 (61.8 %) |
-| Distinct shapes                    | 8400           |
-| Incidences per shape               | 8              |
-| Solver version                     | 1.0.0          |
+| | |
+|---|---|
+| Rows | 67200 |
+| Converged (`solver_status = "ok"`) | 41540 (61.8 %) |
+| Distinct shapes | 8400 |
+| Incidences per shape | 8 |
+| Solver version | 1.0.0 |
 
-Status breakdown: `ok` 41541, `bl_not_converged` 25659.
+Status breakdown: `ok` 41540, `bl_not_converged` 25648, `geometry_invalid` 12.
 
 **Only `ok` rows are valid for analysis or training.** Failures are published rather than dropped so
 the failure rate is visible; they carry `nan` for every drag column.
@@ -26,54 +26,54 @@ as the adverse gradient strengthens. This is the measured consequence, and it is
 will be weakest at the edges of the range.
 
 | `alpha_deg` | rows | converged | share |
-| ----------- | ---- | --------- | ----- |
-| -6 to -4    | 8400 | 5043      | 60 %  |
-| -4 to -2    | 8400 | 6284      | 75 %  |
-| -2 to +0    | 8400 | 7046      | 84 %  |
-| +0 to +2    | 8400 | 7087      | 84 %  |
-| +2 to +4    | 8400 | 6313      | 75 %  |
-| +4 to +6    | 8400 | 4911      | 58 %  |
-| +6 to +8    | 8400 | 3289      | 39 %  |
-| +8 to +10   | 8400 | 1568      | 19 %  |
+|---|---|---|---|
+| -6 to -4 | 8400 | 5043 | 60 % |
+| -4 to -2 | 8400 | 6284 | 75 % |
+| -2 to +0 | 8400 | 7046 | 84 % |
+| +0 to +2 | 8400 | 7086 | 84 % |
+| +2 to +4 | 8400 | 6313 | 75 % |
+| +4 to +6 | 8400 | 4911 | 58 % |
+| +6 to +8 | 8400 | 3289 | 39 % |
+| +8 to +10 | 8400 | 1568 | 19 % |
 
 ## Coverage by thickness
 
 Converged rows only.
 
 | maximum thickness | rows |
-| ----------------- | ---- |
-| 6 to 8 %          | 1957 |
-| 8 to 10 %         | 5583 |
-| 10 to 12 %        | 8462 |
-| 12 to 14 %        | 9236 |
-| 14 to 16 %        | 8142 |
-| 16 to 18 %        | 5495 |
-| 18 to 20 %        | 2666 |
+|---|---|
+| 6 to 8 % | 1957 |
+| 8 to 10 % | 5583 |
+| 10 to 12 % | 8461 |
+| 12 to 14 % | 9236 |
+| 14 to 16 % | 8142 |
+| 16 to 18 % | 5495 |
+| 18 to 20 % | 2666 |
 
 ## Performance envelope
 
 Converged rows only.
 
-|              | minimum       | median  | maximum          |
-| ------------ | ------------- | ------- | ---------------- |
-| `cl`         | -0.9960       | +0.2692 | +7.2621          |
-| `cd`         | 0.00425       | 0.00866 | 2161626759.35757 |
-| `cl_over_cd` | -133.7        | +33.4   | +168.3           |
-| `cm_quarter` | -8859164.4805 | -0.0416 | +0.1095          |
+| | minimum | median | maximum |
+|---|---|---|---|
+| `cl` | -0.9960 | +0.2692 | +1.8928 |
+| `cd` | 0.00425 | 0.00866 | 2161626759.35757 |
+| `cl_over_cd` | -133.7 | +33.4 | +168.3 |
+| `cm_quarter` | -11769.9732 | -0.0416 | +0.1095 |
 
 ## Reduced-order basis
 
-Proper orthogonal decomposition of the velocity _perturbation_ fields -- the total minus the
+Proper orthogonal decomposition of the velocity *perturbation* fields -- the total minus the
 freestream, with the body zeroed. See ADR-007 and `tools/dataset/pod.py`.
 
 | modes | variance captured |
-| ----- | ----------------- |
-| 1     | 83.916 %          |
-| 2     | 86.911 %          |
-| 4     | 91.729 %          |
-| 8     | 95.284 %          |
-| 16    | 97.101 %          |
-| 32    | 98.257 %          |
+|---|---|
+| 1 | 83.916 % |
+| 2 | 86.911 % |
+| 4 | 91.729 % |
+| 8 | 95.284 % |
+| 16 | 97.101 % |
+| 32 | 98.257 % |
 
 Reconstruction against every row in the dataset, not just the subsample the basis was built from:
 relative rms error **10.11 %**, worst single row
@@ -86,11 +86,11 @@ discontinuity -- exactly the structure a linear basis cannot compress. Split by 
 
 "Near the section" means `-0.08 < x/c < 1.08` and `abs(y/c) < 0.14`.
 
-| region                | grid points | relative rms error |
-| --------------------- | ----------- | ------------------ |
-| Everywhere            | 18432       | 9.84 %             |
-| Near the section      | 1332        | 17.7 %             |
-| Away from the section | 17100       | 1.14 %             |
+| region | grid points | relative rms error |
+|---|---|---|
+| Everywhere | 18432 | 9.84 % |
+| Near the section | 1332 | 17.7 % |
+| Away from the section | 17100 | 1.14 % |
 
 Over the 93 % of the domain the particles and
 streamlines actually traverse, the reconstruction is accurate to about one per cent of the
