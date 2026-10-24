@@ -49,6 +49,16 @@ export default tseslint.config(
     extends: [reactHooks.configs.flat['recommended-latest']],
   },
 
+  // Unit tests. Indexing a Float64Array under `noUncheckedIndexedAccess` yields
+  // `number | undefined`, and asserting non-null is clearer in a test than threading an
+  // unwrap helper through every assertion. Production code keeps the rule on.
+  {
+    files: ['src/**/*.test.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
+
   // Config files run in Node and are not part of the app's type graph.
   {
     files: ['*.config.{js,ts}', 'eslint.config.js'],

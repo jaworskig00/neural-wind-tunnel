@@ -131,7 +131,7 @@ src/              TypeScript app
 docs/             this plan, decisions, contracts, accuracy, perf, screenshots
 data/sample/      small committed CSV sample of the dataset
 models/           generated artifacts, gitignored, fetched from Releases
-tests/            unit (Vitest) and e2e (Playwright)
+tests/e2e         Playwright specs; unit tests sit next to the module they cover
 ```
 
 ### Data contracts shared with the sister project
@@ -191,7 +191,7 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 - [ ] **T0.1** Repo created, MIT licence, `.gitignore`, `.editorconfig`, `.nvmrc`, planning docs committed and pushed.
 - [x] **T0.2** Vite + React + TS strict scaffold; `package.json` scripts `dev build preview lint typecheck test test:e2e format`; app renders a placeholder shell.
 - [x] **T0.3** ESLint flat config + Prettier + lint-staged + git hook; `pnpm lint` clean on a bare repo.
-- [ ] **T0.4** Vitest configured with a coverage reporter and one real test (CST evaluator fixture placeholder is fine).
+- [x] **T0.4** Vitest configured with a coverage reporter and one real test (CST evaluator fixture placeholder is fine).
 - [ ] **T0.5** Playwright configured; smoke test asserts the app boots with zero console errors and zero failed requests.
 - [ ] **T0.6** Python env via `uv`: `pyproject.toml`, ruff, pytest, `tools/` package layout, one passing test.
 - [ ] **T0.7** GitHub Actions `ci.yml`: web job (install, lint, typecheck, unit, build, e2e smoke) and python job (ruff, pytest), both cached; `size-limit` check on the bundle budget.

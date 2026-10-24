@@ -71,3 +71,22 @@ config lives under `configs.flat['recommended-latest']`, which is what this proj
 here because the plugin's README shows the other one.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T0.4 Vitest with coverage
+
+**Done.** Vitest 5 configured with the v8 coverage provider, text and lcov reporters, and unit
+tests co-located with their module. Eight tests cover `src/geometry/stations.ts` against the
+contract in `docs/DATASET-SCHEMA.md` section 3: column count, exact chord span, monotonicity,
+cosine clustering symmetric about mid-chord, agreement with the closed form to 15 digits, and
+the surface/index mapping including its range guards.
+
+**Verified.** `pnpm test` 8 passed; `pnpm test:coverage` reports 100 % of
+`src/geometry/stations.ts` covered. `App.tsx` is uncovered by design — the Playwright smoke
+test in T0.5 owns it.
+
+**Follow-ups.** Added an ESLint override allowing non-null assertions in `*.test.ts` only:
+indexing a `Float64Array` under `noUncheckedIndexedAccess` is `number | undefined`, and an
+unwrap helper in every assertion reads worse than the assertion. Production code keeps the rule
+on. `docs/PLAN.md` folder map updated: unit tests are co-located, `tests/e2e` is Playwright's.
+
+**Commit.** see `git log`
