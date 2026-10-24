@@ -189,7 +189,7 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 ### M0 — Repository, tooling, CI
 
 - [ ] **T0.1** Repo created, MIT licence, `.gitignore`, `.editorconfig`, `.nvmrc`, planning docs committed and pushed.
-- [ ] **T0.2** Vite + React + TS strict scaffold; `package.json` scripts `dev build preview lint typecheck test test:e2e format`; app renders a placeholder shell.
+- [x] **T0.2** Vite + React + TS strict scaffold; `package.json` scripts `dev build preview lint typecheck test test:e2e format`; app renders a placeholder shell.
 - [ ] **T0.3** ESLint flat config + Prettier + lint-staged + git hook; `pnpm lint` clean on a bare repo.
 - [ ] **T0.4** Vitest configured with a coverage reporter and one real test (CST evaluator fixture placeholder is fine).
 - [ ] **T0.5** Playwright configured; smoke test asserts the app boots with zero console errors and zero failed requests.

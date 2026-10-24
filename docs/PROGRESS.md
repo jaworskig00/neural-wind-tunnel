@@ -34,3 +34,21 @@ jaworskig00, git identity set, Node 25.8.2, pnpm 10.30.0, Python 3.12.12, uv 0.9
 Playwright browsers not yet installed; that happens in T0.5.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T0.2 Vite + React + TypeScript scaffold
+
+**Done.** Vite 8.3 + React 19.3 + TypeScript 6.0 scaffold with `strict` plus
+`noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` (the current Vite template ships
+without `strict` at all). Placeholder shell in `src/app/App.tsx`, project favicon, and
+`src/geometry/stations.ts` — the cosine surface-station grid from `docs/DATASET-SCHEMA.md`
+section 3, which the shell renders so the toolchain is proven end to end.
+
+**Verified.** `pnpm typecheck` clean; `pnpm build` produced 220.71 kB raw / 69.08 kB gzip,
+well inside the 250 kB gzip budget; dev server on port 5182 renders the shell with zero
+console errors and reports stations 0.000 to 1.000 as the schema requires. Screenshot taken.
+
+**Follow-ups.** The app's launch config uses port 5182 because the preview tooling resolved a
+different project's config on 5173. Linting is still the template's default; T0.3 replaces it
+with ESLint as the plan specifies.
+
+**Commit.** see `git log`

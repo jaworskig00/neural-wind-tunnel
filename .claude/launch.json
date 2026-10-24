@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "neural-wind-tunnel",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev", "--port", "5182", "--strictPort"],
+      "port": 5182
+    }
+  ]
+}

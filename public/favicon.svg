@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#0b1118" />
+  <!-- A cambered section at a positive angle of attack, with two streamlines. -->
+  <path d="M4 20 C 11 13, 21 11, 28 14 C 21 16, 11 20, 4 20 Z" fill="#8ab4f8" />
+  <path d="M2 11 C 12 7, 22 7, 30 10" stroke="#3c4e63" stroke-width="1.4" fill="none" />
+  <path d="M2 25 C 12 23, 22 22, 30 22" stroke="#3c4e63" stroke-width="1.4" fill="none" />
+</svg>
