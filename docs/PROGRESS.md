@@ -271,3 +271,23 @@ two sides rather than the outside value, so the comparison needs a `gamma/2` cor
 delicate at panel-length scales. The circulation integral covers the same ground unambiguously.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T1.6 Solver validation document, milestone M1 closed
+
+**Done.** `docs/solver-validation.md` with five regenerable figures and the measured numbers
+behind every claim: the exact circle comparison with its convergence, lift-curve slope against
+the thickness correction, Thwaites against Blasius, NACA 0012 pressure distributions and polar
+with the published drag band drawn on, and the sampled velocity field.
+`tools/solver/make_validation_figures.py` regenerates all of them with one command.
+
+**Verified.** `uv run pytest` 89 passed. Figures inspected rather than assumed: the velocity
+field shows acceleration over the suction side, the stagnation point below the nose at positive
+incidence, and upwash ahead with downwash behind. The polar's minimum drag sits just to the right
+of the published 0.0055 to 0.0060 band, which is visible in the figure rather than hidden in prose.
+
+**Follow-ups.** The document states seven limits plainly, including the two that most constrain
+the project: the viscous march converges only to between 4.5 and 7 degrees depending on camber,
+and separation-induced transition — an assumption, not a model — is what sets transition above
+roughly four degrees. Both must surface in the app and in `docs/accuracy.md`.
+
+**Commit.** see `git log`
