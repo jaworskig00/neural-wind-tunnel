@@ -290,3 +290,46 @@ agreement with experiment is not asserted here; that comparison belongs with the
 and is made qualitatively, with the discrepancy explained, in `docs/solver-validation.md`. If a
 redistributable reference dataset is added later, these tests stay as they are and the
 comparison is added alongside them.
+
+---
+
+## ADR-015 — Separation-induced transition, a trailing-edge cut-off, and the honest incidence limit
+
+**Status.** accepted
+
+**Context.** Three things broke when the integral boundary layer was first marched over real
+sections, and all three have the same root: an uncoupled integral method has no way to represent
+flow that is not attached and thin.
+
+1. A laminar boundary layer under the suction peak separates well before Michel's criterion is
+   met -- at NACA 0012, four degrees, Reynolds one million, that happens at 27 % of chord.
+   Treating it as a failure would have discarded most of the useful incidence range.
+2. At a sharp trailing edge the inviscid edge velocity collapses toward the rear stagnation
+   point. The momentum equation's `(H + 2) * theta / Ue * dUe/ds` term then diverges, and every
+   section was reported as separating at 99.9 % of chord.
+3. Even with both handled, the turbulent march reaches `H = 2.4` somewhere between six and eight
+   degrees depending on camber, and raising the separation threshold to 3.0 buys only one more
+   degree -- the limit is physical, not a threshold choice.
+
+**Decision.**
+
+- **Separation-induced transition.** When laminar separation precedes Michel's criterion, the
+  march transitions at the separation point and continues turbulent. At this Reynolds number a
+  laminar separation normally forms a short bubble that reattaches turbulent within a few per
+  cent of chord, so this is the standard engineering treatment, but it is an assumption, not a
+  model: no bubble length, no reattachment loss. `SurfaceBoundaryLayer.separation_induced_transition`
+  records which mechanism fired, and the dataset carries it.
+- **Trailing-edge cut-off at 98 % of chord.** The march stops there and Squire-Young is
+  evaluated at that one consistent station -- `theta`, `H` and `Ue` all from it. Taking the edge
+  velocity from the last panel instead put drag out by a factor of four, because `Ue` there is
+  already collapsing: the cut-off is not cosmetic.
+- **The incidence limit is published, not papered over.** Rows beyond the convergence limit are
+  marked `bl_not_converged` and excluded from training. The dataset's sampled range stays wide;
+  what narrows is the range in which rows actually converge, and the app warns outside it.
+
+**Consequences.** NACA 0012 at Reynolds one million now gives `Cd = 0.0061` at zero incidence
+against a published 0.0055 to 0.0060, with `theta_te = 0.00226` and `H_te = 1.66` -- textbook
+values. Coverage thins above roughly six degrees and the surrogate will be weakest there, which
+`docs/accuracy.md` must show per incidence rather than as a single aggregate number. Thwaites on
+a flat plate reproduces Blasius to 1.03 %, which is that method's known accuracy, so the laminar
+side carries about a percent of error before any of this is considered.

@@ -213,3 +213,30 @@ and the T1.3 acceptance criterion in `docs/PLAN.md` was rewritten to match what 
 asserted.
 
 **Commit.** see `git log`
+
+## 2026-10-24 — T1.4 Integral boundary layer and the solver entry point
+
+**Done.** `tools/solver/boundary_layer.py`: Thwaites' laminar method, Michel's transition
+criterion, Head's entrainment method with the Ludwieg-Tillmann skin-friction law, and
+Squire-Young profile drag, with explicit statuses for laminar separation, turbulent separation
+and non-convergence. `tools/solver/solve.py` is the single entry point the dataset pipeline
+calls: it splits the geometric surfaces for the 128 pressure stations, splits the branches at the
+stagnation point for the viscous march, and returns one row's worth of results.
+
+**Verified.** `uv run pytest` 77 passed. Thwaites on a flat plate reproduces Blasius with
+`theta` ratio 1.0103 at every station — exactly the method's known 1 % accuracy, since it gives
+`sqrt(0.45) = 0.6708` against Blasius' 0.664 — and skin friction within 2 %. Laminar drag scales
+as `Re**-0.5` to within 1 %. Head's `H` and `H1` relations invert to 1e-3. NACA 0012 at Reynolds
+one million, zero incidence: `Cd = 0.00609` against a published 0.0055 to 0.0060,
+`theta_te = 0.00226`, `H_te = 1.66`, transition at 55.5 % of chord. Drag rises monotonically with
+incidence and transition marches forward on the suction side and aft on the pressure side.
+
+**Follow-ups.** ADR-015 records three decisions forced by the physics: laminar separation now
+induces transition rather than failing the row, the march stops at 98 % of chord because the edge
+velocity collapses into the rear stagnation point at a sharp trailing edge, and the convergence
+limit of roughly six to eight degrees depending on camber is published rather than tuned away.
+Taking the Squire-Young edge velocity from the last panel instead of the cut-off station put drag
+out by a factor of four — worth remembering. `docs/DATASET-SCHEMA.md` now warns that valid-row
+density thins above about six degrees.
+
+**Commit.** see `git log`

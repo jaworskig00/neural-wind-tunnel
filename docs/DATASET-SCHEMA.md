@@ -54,6 +54,13 @@ time, and that file is authoritative for a given dataset version.
 | `cst_l_5`             | -0.25 | 0.20  |
 | `alpha_deg`           | -6.0  | 14.0  |
 
+Coverage is not uniform across this range. The reference solver is an uncoupled integral method
+with no separated-flow model, so the viscous march stops converging somewhere between six and
+eight degrees depending on camber; those rows are published with `solver_status =
+"bl_not_converged"` and must be filtered out. Expect the density of valid rows to thin above
+roughly six degrees and to be sparse near the upper bound. See `solver-validation.md` and
+ADR-015.
+
 Validity filters applied after sampling and before solving: maximum thickness between 6 % and
 20 % of chord, no crossing of the two surfaces anywhere in `(0, 1)`, leading-edge radius between
 0.2 % and 5 % of chord, enclosed area positive. Rejected samples are not stored; the rejection
