@@ -29,7 +29,11 @@ const CSP = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'none'",
-  "frame-ancestors 'none'",
+  // No `frame-ancestors`: a browser ignores it when it arrives in a meta element, and says so in
+  // the console on every load. It only works as an HTTP header, which a static host like GitHub
+  // Pages cannot send. Clickjacking protection therefore waits for a host that can set headers;
+  // there is nothing here to click-jack but a slider, and a policy line that does nothing while
+  // printing an error is worse than its absence.
 ].join('; ')
 
 function contentSecurityPolicy(): Plugin {
@@ -47,6 +51,15 @@ function contentSecurityPolicy(): Plugin {
 
 // https://vite.dev/config/
 export default defineConfig({
+  /**
+   * GitHub Pages serves this project under `/neural-wind-tunnel/`, not at a domain root.
+   *
+   * Only the Pages build sets `PAGES_BASE`; local development, the Playwright suite and CI all
+   * stay at `/`, so nothing about the everyday loop changes. Every artifact the app fetches at
+   * runtime already resolves through `import.meta.env.BASE_URL` (`src/ml/sources.ts`), so this
+   * single value is enough -- there are no absolute `/models/...` paths to find and fix.
+   */
+  base: process.env['PAGES_BASE'] ?? '/',
   plugins: [react(), tailwindcss(), contentSecurityPolicy()],
   build: {
     // Vite's warning counts uncompressed bytes, which says little about what a visitor downloads.

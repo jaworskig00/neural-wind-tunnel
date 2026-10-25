@@ -54,7 +54,8 @@ const html = await readFile(join(DIST, 'index.html'), 'utf8')
 if (!html.includes('http-equiv="Content-Security-Policy"')) {
   failures.push('dist/index.html: the production build has no Content Security Policy')
 }
-for (const directive of ["object-src 'none'", "default-src 'self'", "frame-ancestors 'none'"]) {
+// `frame-ancestors` is deliberately absent: it is ignored in a meta element. See vite.config.ts.
+for (const directive of ["object-src 'none'", "default-src 'self'", "base-uri 'self'"]) {
   if (!html.includes(directive)) {
     failures.push(`dist/index.html: the policy is missing "${directive}"`)
   }

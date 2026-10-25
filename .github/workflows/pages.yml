@@ -1,0 +1,67 @@
+name: pages
+
+# Publishes the built app to GitHub Pages on every push to main.
+#
+# Deliberately separate from `ci.yml`: this job only needs a build, while CI needs the whole
+# gauntlet, and a deployment that waited for the Playwright suite would be slower for no gain.
+# CI still runs on the same commit, so a red build is visible next to the deployment.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Fetch the published model artifacts
+        # The model and the mode atlas are not in the repository (ADR-012). Without this step the
+        # site deploys and then fails to predict anything, which is worse than failing here.
+        run: uv run python tools/sync_models.py --release
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Build for the Pages sub-path
+        run: pnpm build
+        env:
+          PAGES_BASE: /neural-wind-tunnel/
+
+      - name: No credentials in the bundle, policy present
+        run: pnpm check:bundle
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
