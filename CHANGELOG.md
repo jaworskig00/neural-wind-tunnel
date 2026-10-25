@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The flow field was invisible on a fast display.** The trail buffer decayed per second but was
+  deposited into per frame, so its steady-state brightness scaled with the frame rate. At 120 Hz
+  the dense band of freshly seeded particles at the inlet saturated to white within a second while
+  the rest of the field, two orders of magnitude sparser, never crossed the first visible step:
+  an empty tunnel with a bright stripe down one edge. Deposition is now scaled by the same frame
+  time the fade uses, and the reference opacity was re-tuned for the corrected exposure. The
+  simulation was never at fault — particles advected across the whole domain the entire time.
+- `src/gpgpu/trails.test.ts` asserts the steady state is frame-rate independent, and
+  `tests/e2e/scene.spec.ts` asserts the flow reaches the domain downstream of the section. Only
+  the first catches this bug; CI's software renderer runs at the frame rate where the broken
+  arithmetic looks right, which is why it shipped.
+
 ### Added
 
 - The app is deployed to GitHub Pages at <https://jaworskig00.github.io/neural-wind-tunnel/>,

@@ -833,3 +833,36 @@ in the first draft was wrong and got corrected before it shipped: the app does n
 your GPU lacks float render targets, it just falls back. The README now says that instead.
 
 **Commit.** see `git log`
+
+## Post-deploy — the flow field was invisible on a 120 Hz display
+
+**Greg sent two screenshots of the live site**: an empty black tunnel with a bright blue stripe
+down the left edge. I had seen exactly that picture twice while capturing media and talked myself
+out of it both times — first as a headless-Chromium artefact, then as a trail-exposure setting.
+Neither was true. It was a bug, and it was on production.
+
+**What it was not.** Reading the particle position texture off the GPU showed the simulation was
+perfect: x spanning the full domain from -1 to 2, ages spread across the whole six-second
+lifetime, a density build-up downstream exactly where a wake belongs. The velocity field was
+healthy (u from 0.43 to 1.34) and the body mask covered 1.8 % of the domain, which is right for a
+12 % section. Everything upstream of rendering worked.
+
+**What it was.** The trail buffer fades per second, `exp(-decay * dt)`, and was deposited into per
+frame at a constant opacity. A pixel settles where deposition balances decay, so its brightness is
+proportional to `1 / dt` — the frame rate. At 120 Hz the inlet band, where every respawn puts
+particles and where density is highest, saturated to white in under a second; the rest of the
+field sat two orders of magnitude lower and never reached the first visible step. Deposition now
+carries the same `dt` the fade uses, and `REFERENCE_OPACITY` dropped from 0.012 to 0.0035 because
+the saturated band had been hiding how over-exposed the whole picture was.
+
+**Why it survived every check.** CI renders through SwiftShader at about eight frames a second,
+which is almost exactly where the broken arithmetic lands on a sensible answer. The end-to-end
+suite, the performance suite and the screenshot captures all ran there. I confirmed this rather
+than assumed it: restoring the bug leaves the new end-to-end test green. The guard that works is
+`src/gpgpu/trails.test.ts`, which is parametric in frame time and needs no GPU at all — it fails
+the moment deposition stops being time-scaled.
+
+**The lesson worth keeping.** Twice I saw the symptom and reasoned it away instead of measuring.
+The measurement that settled it took one diagnostic handle and two minutes.
+
+**Commit.** see `git log`

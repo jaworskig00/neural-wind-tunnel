@@ -130,3 +130,70 @@ test.describe('polars', () => {
     await expect(page.getByTestId('polar-chart')).toHaveCount(0)
   })
 })
+
+/**
+ * The flow has to be visible, and visible everywhere the field is.
+ *
+ * This guards a bug that reached production: the trail buffer decayed per second but was deposited
+ * into per frame, so its steady-state brightness scaled with the frame rate. On a 120 Hz display
+ * the dense band of freshly seeded particles at the inlet saturated to white in under a second and
+ * the rest of the field — two orders of magnitude sparser — never crossed the first visible step.
+ * The tunnel looked empty with a bright stripe down its left edge.
+ *
+ * `trails.test.ts` holds the arithmetic, and that is the test that actually catches this bug: it
+ * is parametric in frame time and needs no GPU. This one cannot, and the reason is worth writing
+ * down — CI renders through SwiftShader at around eight frames a second, which is precisely where
+ * the broken arithmetic happens to look correct. Restoring the bug leaves this test green.
+ *
+ * It earns its place for a different failure: the flow must reach the part of the viewport
+ * downstream of the section, and must not be dwarfed by whatever is at the inlet. That covers a
+ * dead field, a broken mask, particles that never advect, and an inlet that saturates.
+ */
+test.describe('the flow field is visible across the domain', () => {
+  test('downstream of the section, not only at the inlet', async ({ page }) => {
+    await installCanvasProbe(page)
+    await page.goto('/#v=1&p=naca2412&a=2&view=particles&tier=mid')
+    await waitForRenderedSection(page)
+
+    // Long enough for a particle to cross the domain: three chords at 0.6 chords per second.
+    await page.waitForFunction(() => (window.__frames ?? 0) > 120, undefined, { timeout: 60_000 })
+    await page.waitForTimeout(6000)
+
+    const bands = await page.evaluate(() => {
+      const canvas = document.querySelector('canvas')
+      if (!canvas) return null
+      const gl = canvas.getContext('webgl2')
+      if (!gl) return null
+      const { width, height } = canvas
+      const pixels = new Uint8Array(width * height * 4)
+      gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+
+      // The upper third only: above the section, where nothing but flow is drawn.
+      const mean = (from: number, to: number) => {
+        let sum = 0
+        let count = 0
+        for (let y = Math.floor(height * 0.72); y < height; y += 2) {
+          for (let x = Math.floor(width * from); x < Math.floor(width * to); x += 2) {
+            const i = (y * width + x) * 4
+            sum += ((pixels[i] ?? 0) + (pixels[i + 1] ?? 0) + (pixels[i + 2] ?? 0)) / 3
+            count += 1
+          }
+        }
+        return count === 0 ? 0 : sum / count
+      }
+
+      return { inlet: mean(0, 0.12), middle: mean(0.4, 0.7), outlet: mean(0.78, 0.98) }
+    })
+
+    expect(bands, 'the canvas could not be sampled').not.toBeNull()
+    if (!bands) return
+    const { inlet, middle, outlet } = bands
+
+    // Each band carries flow. The floor is low because this runs on a software renderer.
+    expect(middle, `mid-domain brightness ${middle.toFixed(1)}`).toBeGreaterThan(6)
+    expect(outlet, `downstream brightness ${outlet.toFixed(1)}`).toBeGreaterThan(6)
+
+    // And the inlet does not drown the rest. In the broken build this ratio was unbounded.
+    expect(inlet / Math.max(middle, 1), 'inlet is far brighter than mid-domain').toBeLessThan(3)
+  })
+})

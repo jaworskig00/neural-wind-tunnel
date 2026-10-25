@@ -36,6 +36,9 @@ export interface TrailOptions {
   readonly intensity?: number
 }
 
+/** The per-second decay the fade pass applies. Exported for the frame-rate invariant test. */
+export const DEFAULT_DECAY = 2.6
+
 export class TrailBuffer {
   private targets: PingPong
   private readonly fade: FullscreenPass
@@ -44,7 +47,7 @@ export class TrailBuffer {
   private width: number
   private height: number
 
-  constructor({ width, height, precision, decay = 2.6, intensity = 0.5 }: TrailOptions) {
+  constructor({ width, height, precision, decay = DEFAULT_DECAY, intensity = 0.5 }: TrailOptions) {
     this.width = width
     this.height = height
     this.targets = new PingPong({ width, height, precision, linear: true })

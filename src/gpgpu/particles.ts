@@ -55,7 +55,34 @@ const DEFAULT_MAX_AGE = 6
  * resolved, not how bright it is.
  */
 const REFERENCE_PARTICLE_COUNT = 262_144
-const REFERENCE_OPACITY = 0.012
+const REFERENCE_OPACITY = 0.0035
+
+/**
+ * The frame time the reference opacity was chosen at.
+ *
+ * The trail buffer decays per second and is deposited into per frame, so without this the two
+ * disagree: the steady-state brightness of a pixel is roughly `deposit / (decay * dt)`, which
+ * makes the picture four times brighter at 120 fps than at 30. The symptom was not subtle --
+ * on a 120 Hz display the dense band of freshly seeded particles at the inlet saturated to solid
+ * white within a second while the rest of the field, two orders of magnitude sparser, stayed below
+ * the first visible step and the tunnel looked empty. It survived review because the machine that
+ * checked it was a software renderer running at eight frames a second, where the same arithmetic
+ * happens to land in a reasonable place.
+ *
+ * Scaling what each particle deposits by the same `dt` the fade uses puts both on a per-second
+ * footing, and the picture then looks the same at 30 fps as at 120.
+ */
+export const REFERENCE_FRAME_TIME = 1 / 60
+
+/**
+ * How much of a frame's worth of light a particle deposits.
+ *
+ * Exported so the invariant can be tested without a GPU: `trailSteadyState` in
+ * `trails.test.ts` asserts that deposition and decay stay matched across frame rates.
+ */
+export function depositionScale(deltaSeconds: number): number {
+  return deltaSeconds / REFERENCE_FRAME_TIME
+}
 
 export class ParticleField {
   readonly points: Points
@@ -65,6 +92,7 @@ export class ParticleField {
   private readonly renderMaterial: ShaderMaterial
   private readonly geometry: BufferGeometry
   private readonly textureSize: number
+  private readonly baseOpacity: number
   private elapsed = 0
 
   constructor({
@@ -73,6 +101,8 @@ export class ParticleField {
     speed = DEFAULT_SPEED,
     maxAge = DEFAULT_MAX_AGE,
   }: ParticleOptions) {
+    this.baseOpacity =
+      (REFERENCE_OPACITY * REFERENCE_PARTICLE_COUNT) / (tier.texture * tier.texture)
     this.textureSize = tier.texture
     this.positions = new PingPong({
       width: tier.texture,
@@ -121,7 +151,7 @@ export class ParticleField {
         uSpeedMax: { value: 1.8 },
         // Low, because the trail buffer integrates every frame a particle is drawn: a value
         // that looks right for a single frame saturates to white within half a second.
-        uOpacity: { value: (REFERENCE_OPACITY * REFERENCE_PARTICLE_COUNT) / count },
+        uOpacity: { value: 0 },
         uColormap: { value: 0 },
         uDomainMin: { value: DOMAIN_MIN.clone() },
         uDomainMax: { value: DOMAIN_MAX.clone() },
@@ -189,6 +219,9 @@ export class ParticleField {
 
     this.renderMaterial.uniforms['uPositions']!.value = this.positions.read.texture
     this.renderMaterial.uniforms['uVelocity']!.value = velocity
+    // Deposit per second, not per frame. `clamped` is the same value the trail fade uses, so the
+    // two cannot drift apart.
+    this.renderMaterial.uniforms['uOpacity']!.value = this.baseOpacity * depositionScale(clamped)
   }
 
   setColormap(index: number): void {
