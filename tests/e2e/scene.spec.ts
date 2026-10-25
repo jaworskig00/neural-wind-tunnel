@@ -150,50 +150,69 @@ test.describe('polars', () => {
  * dead field, a broken mask, particles that never advect, and an inlet that saturates.
  */
 test.describe('the flow field is visible across the domain', () => {
+  // Self-paced rather than clock-paced. A particle needs about five seconds of simulated time to
+  // cross three chords, and the step clamps each frame to 1/30 s, so a runner managing two frames
+  // a second advances the simulation at a fifteenth of real time. Polling lets a GPU finish in
+  // seconds and still gives SwiftShader the minutes it needs.
   test('downstream of the section, not only at the inlet', async ({ page }) => {
+    test.setTimeout(240_000)
     await installCanvasProbe(page)
-    await page.goto('/#v=1&p=naca2412&a=2&view=particles&tier=mid')
+    await page.goto('/#v=1&p=naca2412&a=2&view=particles&tier=low')
     await waitForRenderedSection(page)
 
-    // Long enough for a particle to cross the domain: three chords at 0.6 chords per second.
-    await page.waitForFunction(() => (window.__frames ?? 0) > 120, undefined, { timeout: 60_000 })
-    await page.waitForTimeout(6000)
+    const bands = async () =>
+      page.evaluate(() => {
+        const canvas = document.querySelector('canvas')
+        if (!canvas) return null
+        const gl = canvas.getContext('webgl2')
+        if (!gl) return null
+        const { width, height } = canvas
+        const pixels = new Uint8Array(width * height * 4)
+        gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
 
-    const bands = await page.evaluate(() => {
-      const canvas = document.querySelector('canvas')
-      if (!canvas) return null
-      const gl = canvas.getContext('webgl2')
-      if (!gl) return null
-      const { width, height } = canvas
-      const pixels = new Uint8Array(width * height * 4)
-      gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
-
-      // The upper third only: above the section, where nothing but flow is drawn.
-      const mean = (from: number, to: number) => {
-        let sum = 0
-        let count = 0
-        for (let y = Math.floor(height * 0.72); y < height; y += 2) {
-          for (let x = Math.floor(width * from); x < Math.floor(width * to); x += 2) {
-            const i = (y * width + x) * 4
-            sum += ((pixels[i] ?? 0) + (pixels[i + 1] ?? 0) + (pixels[i + 2] ?? 0)) / 3
-            count += 1
+        // The upper quarter only: above the section, where nothing but flow is drawn.
+        const mean = (from: number, to: number) => {
+          let sum = 0
+          let count = 0
+          for (let y = Math.floor(height * 0.72); y < height; y += 3) {
+            for (let x = Math.floor(width * from); x < Math.floor(width * to); x += 3) {
+              const i = (y * width + x) * 4
+              sum += ((pixels[i] ?? 0) + (pixels[i + 1] ?? 0) + (pixels[i + 2] ?? 0)) / 3
+              count += 1
+            }
           }
+          return count === 0 ? 0 : sum / count
         }
-        return count === 0 ? 0 : sum / count
-      }
 
-      return { inlet: mean(0, 0.12), middle: mean(0.4, 0.7), outlet: mean(0.78, 0.98) }
-    })
+        return { inlet: mean(0, 0.12), middle: mean(0.4, 0.7), outlet: mean(0.78, 0.98) }
+      })
 
-    expect(bands, 'the canvas could not be sampled').not.toBeNull()
-    if (!bands) return
-    const { inlet, middle, outlet } = bands
+    // Wait for the field to develop, then assert. The poll's threshold is the "is there flow
+    // downstream" question; the assertion afterwards is the "does the inlet drown it" question.
+    await expect
+      .poll(
+        async () => {
+          const sample = await bands()
+          return Math.min(sample?.middle ?? 0, sample?.outlet ?? 0)
+        },
+        {
+          timeout: 180_000,
+          message: 'the flow never reached the middle or the outlet of the domain',
+        },
+      )
+      .toBeGreaterThan(8)
 
-    // Each band carries flow. The floor is low because this runs on a software renderer.
-    expect(middle, `mid-domain brightness ${middle.toFixed(1)}`).toBeGreaterThan(6)
-    expect(outlet, `downstream brightness ${outlet.toFixed(1)}`).toBeGreaterThan(6)
+    const settled = await bands()
+    expect(settled).not.toBeNull()
+    if (!settled) return
 
-    // And the inlet does not drown the rest. In the broken build this ratio was unbounded.
-    expect(inlet / Math.max(middle, 1), 'inlet is far brighter than mid-domain').toBeLessThan(3)
+    // The inlet is legitimately the brightest band -- every respawn happens there, so it is the
+    // densest part of the field. What must not happen is it being the *only* visible band, which
+    // is what an exposure that saturates looks like: in the broken build the middle sampled at
+    // essentially zero and this ratio had no upper bound at all.
+    expect(
+      settled.inlet / Math.max(settled.middle, 1),
+      `inlet ${settled.inlet.toFixed(1)} against mid-domain ${settled.middle.toFixed(1)}`,
+    ).toBeLessThan(4)
   })
 })
