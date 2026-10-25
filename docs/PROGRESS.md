@@ -918,3 +918,35 @@ than a silent replacement. The end-to-end budget went from two minutes to five f
 the suite is now timing work that actually happens.
 
 **Commit.** see `git log`
+
+## Post-deploy — the section was rendered as a staircase
+
+Greg sent three close-ups: the pressure colormap on the body applied, in his words, almost as if
+it were wrong.
+
+**Two separate faults, and one red herring that took most of the time.**
+
+The colormap was quantised. `pressureTexelCoordinate` inverts the cosine clustering to a
+_fractional_ station index, and the texture was sampled with `NearestFilter` under a comment
+claiming that interpolating would blur the values being read. It had the argument backwards:
+nearest sampling of a continuous coordinate is what quantises it, and linear interpolation between
+two neighbouring stations is the correct reconstruction of a sampled function. The texture is now
+64 x 2 rather than 128 x 1 so that a filter can interpolate along the chord without ever blending
+the upper surface's trailing edge into the lower surface's leading edge.
+
+The end caps were worse. They were a triangle fan from a point at mid-chord, so the chordwise
+coordinate fell to 0.5 in the middle of the section and the cut came out painted with contours
+radiating from somewhere meaningless. They are now a ladder between the two surfaces at matching
+chord. While fixing it, the cap facing the camera turned out to have inverted winding and to be
+back-face culled -- the body had been rendering hollow from one side and nobody had noticed.
+
+**The red herring.** A row of bright beads along the silhouette at grazing angles, one per panel.
+I chased it through five hypotheses -- shading, the caps, texture filtering, the `acos` in the
+fragment shader, the panel count -- fixing two real things along the way and never the beads.
+Forcing a flat colour on the wall settled it: the beads were still there, and they were pink, a
+colour nowhere in a flat material. They are the trail field behind the section bleeding through a
+near-tangent silhouette edge in the multisample resolve. Nothing to do with pressure at all. The
+lesson is the same one as last week's: the cheap decisive experiment -- make the thing constant and
+see if the symptom survives -- should have been the first move, not the sixth.
+
+**Commit.** see `git log`

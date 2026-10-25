@@ -1,22 +1,29 @@
-// Maps a chordwise position to its index in the 128-entry pressure array.
+// Where a station index lands in the pressure texture.
 //
-// The dataset's stations are cosine-clustered, `psi_j = (1 - cos(pi j / 63)) / 2`, so recovering the
-// index from a position means inverting that: `j = 63 * acos(1 - 2 psi) / pi`. Doing it here rather
-// than passing an index per vertex keeps the mesh attributes to what the geometry needs, and the
-// inverse is exact — no lookup table, no interpolation error.
-//
-// `docs/DATASET-SCHEMA.md` section 3 is the contract this implements.
+// The index itself arrives interpolated from the mesh, which carries it per vertex; inverting the
+// cosine clustering per fragment instead made `acos` of an affinely interpolated chord, and its
+// gradient jumps across each quad's diagonal. `src/geometry/stations.ts` has the inverse and the
+// story. `docs/DATASET-SCHEMA.md` section 3 is the contract behind both.
 
 const float CP_STATIONS_PER_SURFACE = 64.0;
 
-float stationIndexFromChord(float chord) {
-  float clamped = clamp(chord, 0.0, 1.0);
-  return (CP_STATIONS_PER_SURFACE - 1.0) * acos(clamp(1.0 - 2.0 * clamped, -1.0, 1.0)) / 3.14159265359;
-}
-
-// Texture coordinate for a chordwise position on one surface. `surface` is 0 for upper, 1 for lower,
-// matching the column order in the dataset.
-float pressureTexelCoordinate(float chord, float surface) {
-  float index = surface * CP_STATIONS_PER_SURFACE + stationIndexFromChord(chord);
-  return (index + 0.5) / (2.0 * CP_STATIONS_PER_SURFACE);
+// A 64 x 2 texture whose rows are the upper and lower surfaces, in the dataset's column order. The
+// row coordinate lands exactly on a texel centre, so a linear filter interpolates along the chord
+// and never between the two surfaces.
+//
+// The fractional part is eased rather than used raw. A linear filter reconstructs a piecewise
+// linear curve through the 64 samples, which is continuous but has a kink in its gradient at every
+// station; seen at a grazing angle, where a whole station compresses into a pixel or two, those
+// kinks read as a regular row of bright beads along the silhouette. Feeding the hardware an eased
+// fraction turns the same two taps into a smoothstep blend, which is continuous in its gradient
+// too. It adds no samples and invents no data: the value at each station is still exactly the
+// predicted one, and only the path between neighbours changes.
+vec2 pressureTexelCoordinate(float station, float surface) {
+  float clamped = clamp(station, 0.0, CP_STATIONS_PER_SURFACE - 1.0);
+  float whole = floor(clamped);
+  float fraction = clamped - whole;
+  float eased = fraction * fraction * (3.0 - 2.0 * fraction);
+  float u = (whole + 0.5 + eased) / CP_STATIONS_PER_SURFACE;
+  float v = (surface + 0.5) * 0.5;
+  return vec2(u, v);
 }

@@ -13,7 +13,7 @@ describe('resolveIncludes', () => {
 
   it('substitutes a chunk', () => {
     const resolved = resolveIncludes('#include <stations>\nvoid main() {}')
-    expect(resolved).toContain('float stationIndexFromChord')
+    expect(resolved).toContain('vec2 pressureTexelCoordinate')
     expect(resolved).not.toContain('#include')
   })
 

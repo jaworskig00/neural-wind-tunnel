@@ -46,3 +46,19 @@ export function cpStationAt(index: number): { surface: Surface; x: number } {
   const last = CP_STATIONS_PER_SURFACE - 1
   return { surface, x: 0.5 * (1 - Math.cos((Math.PI * j) / last)) }
 }
+
+/**
+ * The fractional station index a chordwise position falls at.
+ *
+ * The inverse of the cosine clustering in `cpStations`. It lives here, and is written onto the
+ * mesh as a vertex attribute, rather than being evaluated per fragment: `acos` is strongly
+ * nonlinear, and a quad whose two triangles each interpolate the chord affinely gives it a
+ * gradient that jumps across the diagonal. At a grazing angle that showed up as a regular row of
+ * bright beads along the silhouette, one per panel -- a rendering artefact that looked like data.
+ * Interpolating the index instead is linear, and the mesh is denser than the station grid, so
+ * nothing is lost.
+ */
+export function stationIndexFromChord(chord: number): number {
+  const clamped = Math.min(Math.max(chord, 0), 1)
+  return ((CP_STATIONS_PER_SURFACE - 1) * Math.acos(1 - 2 * clamped)) / Math.PI
+}

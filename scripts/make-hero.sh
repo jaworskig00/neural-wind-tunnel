@@ -24,12 +24,12 @@ ffmpeg -y -loglevel error -framerate 20 -pattern_type glob -i "$frames/hero-*.pn
   "$out/hero.mp4"
 
 ffmpeg -y -loglevel error -framerate 20 -pattern_type glob -i "$frames/hero-*.png" \
-  -vf "fps=10,scale=400:-2:flags=lanczos,palettegen=max_colors=48:stats_mode=diff" \
+  -vf "fps=9,scale=360:-2:flags=lanczos,palettegen=max_colors=36:stats_mode=diff" \
   "$out/hero-palette.png"
 
 ffmpeg -y -loglevel error -framerate 20 -pattern_type glob -i "$frames/hero-*.png" \
   -i "$out/hero-palette.png" \
-  -lavfi "fps=10,scale=400:-2:flags=lanczos[v];[v][1:v]paletteuse=dither=none:diff_mode=rectangle" \
+  -lavfi "fps=9,scale=360:-2:flags=lanczos[v];[v][1:v]paletteuse=dither=none:diff_mode=rectangle" \
   "$out/hero.gif"
 
 rm -f "$out/hero-palette.png"

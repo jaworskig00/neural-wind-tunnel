@@ -6,6 +6,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The pressure colormap was quantised to 64 steps per surface.** The shader computes a
+  _fractional_ station from the chord, but the texture was sampled with nearest filtering, so a
+  smooth distribution rendered as a flight of stairs across the section. The texture is now two
+  rows of 64 -- one per surface, so a filter can interpolate along the chord and never between the
+  upper and lower surfaces, which sit at opposite ends of the scale -- and is sampled linearly with
+  an eased fraction, so the gradient is continuous as well as the value.
+- **The end caps were painted with a fan of contours that meant nothing.** They were triangulated
+  from a centre point at mid-chord, which collapsed the chordwise coordinate to 0.5 in the middle
+  of the section. They are now a ladder between the two surfaces at matching chord, and the cut is
+  drawn darker and partly desaturated so the wall, where the pressure was actually computed, is
+  always the brighter surface.
+- The cap facing the camera had its winding inverted and was being back-face culled, so the body
+  rendered hollow from one side.
+- The inverse of the station clustering moved from the fragment shader to the mesh, as a vertex
+  attribute. `acos` of an affinely interpolated chord has a gradient that jumps across each quad's
+  diagonal; interpolating the index is linear, and the mesh is denser than the station grid.
+
 ### Changed
 
 - `docs/perf.md` re-measured. Every frame-time figure in it had been taken with a tier pinned by
