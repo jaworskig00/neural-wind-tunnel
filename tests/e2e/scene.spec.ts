@@ -154,65 +154,146 @@ test.describe('the flow field is visible across the domain', () => {
   // cross three chords, and the step clamps each frame to 1/30 s, so a runner managing two frames
   // a second advances the simulation at a fifteenth of real time. Polling lets a GPU finish in
   // seconds and still gives SwiftShader the minutes it needs.
-  test('downstream of the section, not only at the inlet', async ({ page }) => {
-    test.setTimeout(240_000)
-    await installCanvasProbe(page)
-    await page.goto('/#v=1&p=naca2412&a=2&view=particles&tier=low')
-    await waitForRenderedSection(page)
+  async function sampleBands(page: import('@playwright/test').Page) {
+    return page.evaluate(() => {
+      const canvas = document.querySelector('canvas')
+      if (!canvas) return null
+      const gl = canvas.getContext('webgl2')
+      if (!gl) return null
+      const { width, height } = canvas
+      const pixels = new Uint8Array(width * height * 4)
+      gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
 
-    const bands = async () =>
-      page.evaluate(() => {
-        const canvas = document.querySelector('canvas')
-        if (!canvas) return null
-        const gl = canvas.getContext('webgl2')
-        if (!gl) return null
-        const { width, height } = canvas
-        const pixels = new Uint8Array(width * height * 4)
-        gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
-
-        // The upper quarter only: above the section, where nothing but flow is drawn.
-        const mean = (from: number, to: number) => {
-          let sum = 0
-          let count = 0
-          for (let y = Math.floor(height * 0.72); y < height; y += 3) {
-            for (let x = Math.floor(width * from); x < Math.floor(width * to); x += 3) {
-              const i = (y * width + x) * 4
-              sum += ((pixels[i] ?? 0) + (pixels[i + 1] ?? 0) + (pixels[i + 2] ?? 0)) / 3
-              count += 1
-            }
+      // The upper quarter only: above the section, where nothing but flow is drawn.
+      const mean = (from: number, to: number) => {
+        let sum = 0
+        let count = 0
+        for (let y = Math.floor(height * 0.72); y < height; y += 3) {
+          for (let x = Math.floor(width * from); x < Math.floor(width * to); x += 3) {
+            const i = (y * width + x) * 4
+            sum += ((pixels[i] ?? 0) + (pixels[i + 1] ?? 0) + (pixels[i + 2] ?? 0)) / 3
+            count += 1
           }
-          return count === 0 ? 0 : sum / count
         }
+        return count === 0 ? 0 : sum / count
+      }
 
-        return { inlet: mean(0, 0.12), middle: mean(0.4, 0.7), outlet: mean(0.78, 0.98) }
-      })
+      return { inlet: mean(0, 0.12), middle: mean(0.4, 0.7), outlet: mean(0.78, 0.98) }
+    })
+  }
 
-    // Wait for the field to develop, then assert. The poll's threshold is the "is there flow
-    // downstream" question; the assertion afterwards is the "does the inlet drown it" question.
+  /**
+   * Let the trail buffer forget before judging it.
+   *
+   * The buffer keeps `exp(-2.6 * dt)` of itself per frame, so a hundred frames erases it
+   * completely. Without this wait the assertion can pass on the picture the *previous* stages
+   * left behind, which is exactly how the first version of this test failed to catch the bug it
+   * was written for.
+   */
+  async function forgetTrails(page: import('@playwright/test').Page) {
+    const from = await page.evaluate(() => window.__frames ?? 0)
+    await page.waitForFunction((start: number) => (window.__frames ?? 0) > start + 150, from, {
+      timeout: 120_000,
+    })
+  }
+
+  /** Runs `body` with the flow field switched off, then switches it back on. */
+  async function withFlowOff<T>(
+    page: import('@playwright/test').Page,
+    body: () => Promise<T>,
+  ): Promise<T> {
+    await page.getByRole('button', { name: 'none', exact: true }).click()
+    try {
+      return await body()
+    } finally {
+      await page.getByRole('button', { name: 'particles', exact: true }).click()
+    }
+  }
+
+  /**
+   * The flow must be brighter than the same frame with the flow turned off.
+   *
+   * An absolute threshold cannot tell "the field is dead" from "this renderer is dim": a frozen
+   * field still leaves the section, the grid and the inlet band on screen, and on the machine
+   * where this bug was found that background measured 12 against 25 for real flow. Comparing
+   * against the `none` view calibrates per machine, which is what lets this run on a GPU and on
+   * SwiftShader with the same numbers.
+   */
+  async function expectFlowEverywhere(
+    page: import('@playwright/test').Page,
+    background: { inlet: number; middle: number; outlet: number },
+    what: string,
+  ) {
     await expect
       .poll(
         async () => {
-          const sample = await bands()
-          return Math.min(sample?.middle ?? 0, sample?.outlet ?? 0)
+          const sample = await sampleBands(page)
+          if (!sample) return 0
+          return Math.min(sample.middle - background.middle, sample.outlet - background.outlet)
         },
         {
           timeout: 180_000,
-          message: 'the flow never reached the middle or the outlet of the domain',
+          message: `${what}: the flow never reached the middle or the outlet of the domain`,
         },
       )
-      .toBeGreaterThan(8)
+      .toBeGreaterThan(5)
 
-    const settled = await bands()
-    expect(settled).not.toBeNull()
+    const settled = await sampleBands(page)
+    expect(settled, `${what}: the canvas could not be sampled`).not.toBeNull()
     if (!settled) return
 
     // The inlet is legitimately the brightest band -- every respawn happens there, so it is the
-    // densest part of the field. What must not happen is it being the *only* visible band, which
-    // is what an exposure that saturates looks like: in the broken build the middle sampled at
-    // essentially zero and this ratio had no upper bound at all.
+    // densest part of the field. What must not happen is it being the *only* lit band, which is
+    // what a dead velocity field looks like: nothing ever leaves where it was seeded.
+    const over = (band: number, base: number) => Math.max(band - base, 0.5)
     expect(
-      settled.inlet / Math.max(settled.middle, 1),
-      `inlet ${settled.inlet.toFixed(1)} against mid-domain ${settled.middle.toFixed(1)}`,
+      over(settled.inlet, background.inlet) / over(settled.middle, background.middle),
+      `${what}: inlet ${settled.inlet.toFixed(1)} against mid-domain ${settled.middle.toFixed(1)}`,
     ).toBeLessThan(4)
+  }
+
+  test('on a default load, and after the particle tier changes', async ({ page }) => {
+    test.setTimeout(300_000)
+    await installCanvasProbe(page)
+
+    // No tier in the link: the automatic probe decides, which is what a visitor gets.
+    await page.goto('/#v=1&p=naca2412&a=2&view=particles')
+    await waitForRenderedSection(page)
+
+    /**
+     * The baseline is taken in this same session, seconds from the measurement.
+     *
+     * Not from a separate page load: this suite runs in parallel with the performance tests, and
+     * a runner being hammered by a million particles renders one frame every third of a second.
+     * Two page loads minutes apart on a contended machine are not comparable, and comparing them
+     * made this test fail for a reason that had nothing to do with what it was testing.
+     */
+    const background = await withFlowOff(page, async () => {
+      await forgetTrails(page)
+      return sampleBands(page)
+    })
+    expect(background, 'the canvas could not be sampled').not.toBeNull()
+    if (!background) return
+
+    await expectFlowEverywhere(page, background, 'on a default load')
+
+    /**
+     * Changing the tier rebuilds every GPU stage, and that is where this broke.
+     *
+     * The effects that fill those stages -- the velocity field, the body mask, the colormap, the
+     * trail exposure -- watch the data they carry, not the stages themselves, so none of them
+     * re-ran when the stages were replaced underneath. The new field was never written, its
+     * velocity texture stayed zero, and the particles sat exactly where they were seeded.
+     *
+     * The probe does this on almost every real visit, because it starts conservatively and
+     * climbs. Every test and every screenshot had pinned the tier by hand, which is the one path
+     * that never reproduces it.
+     */
+    for (const tier of ['low', 'mid'] as const) {
+      await page.getByRole('button', { name: tier, exact: true }).click()
+      await expect(page.getByTestId('flow-status')).toContainText(tier)
+      await forgetTrails(page)
+      await expectFlowEverywhere(page, background, `after switching to the ${tier} tier`)
+    }
   })
 })

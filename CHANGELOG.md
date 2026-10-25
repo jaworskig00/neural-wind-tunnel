@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The flow field was dead on a default load.** Changing the particle tier rebuilds every GPU
+  stage, but the effects that fill those stages -- the velocity field, the body mask, the colormap
+  and the trail exposure -- watch the data they carry rather than the stages, so none of them
+  re-ran when the stages were replaced underneath. The new velocity texture was never written and
+  stayed zero, so the particles sat exactly where they were seeded: a bright band at the inlet and
+  an empty tunnel everywhere else. The frame-time probe changes the tier on almost every visit,
+  because it starts conservatively and climbs, so this was what most visitors saw. It never
+  reproduced with a tier pinned by hand, which is how every test and every screenshot had been
+  taken. New stages are now filled at the moment they are built.
+
 - **The flow field was invisible on a fast display.** The trail buffer decayed per second but was
   deposited into per frame, so its steady-state brightness scaled with the frame rate. At 120 Hz
   the dense band of freshly seeded particles at the inlet saturated to white within a second while

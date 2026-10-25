@@ -866,3 +866,37 @@ the moment deposition stops being time-scaled.
 The measurement that settled it took one diagnostic handle and two minutes.
 
 **Commit.** see `git log`
+
+## Post-deploy, second cause — the velocity field was never written
+
+**The trail-exposure fix was real but it was not the whole story.** With it in place the tunnel
+still showed the inlet band and nothing else on a default load, while a tier pinned by hand looked
+perfect. Measuring both in the same run made the split obvious: `auto` gave a uniform 12.3 across
+the middle and the outlet, pinned `high` gave 25.5 and 22.6 — structured flow against a flat
+background, at identical particle counts and identical uniforms.
+
+**The cause.** A tier change rebuilds every GPU stage. The effects that fill those stages each
+depend on the data they carry — the prediction, the section, the colormap, the trail intensity —
+and none of those changes when the tier does, so not one of them re-ran. The rebuilt
+`FieldReconstruction` was never written to; its velocity texture stayed zero; the particles had
+nothing to advect them and sat where they were seeded. The body mask and the colormap were silently
+missing too.
+
+**Why every check missed it.** The frame-time probe starts conservatively and climbs, so it changes
+the tier on almost every real visit — but every test and every captured screenshot pinned the tier
+in the deep link, which is the one path that never rebuilds the stages after the first frame. The
+blind spot was not the renderer this time; it was that the tests only ever drove the app the way
+the tests drove it.
+
+**The guard.** `tests/e2e/scene.spec.ts` now loads with no tier at all, measures a baseline with
+the flow switched off in the same session, and then switches tier twice through the UI, requiring
+the flow to reach mid-domain and the outlet each time. The baseline is what makes it portable: an
+absolute brightness threshold cannot tell a dead field from a dim renderer, because a frozen field
+still leaves the section, the grid and the inlet band lit. Restoring the bug fails it; restoring
+it fails on SwiftShader too, so CI will catch it.
+
+**Two lessons, both about method.** The first fix was correct and I stopped at it because the
+picture improved — improvement is not correctness. And a test suite that only exercises the paths
+it finds convenient will certify an app nobody can use.
+
+**Commit.** see `git log`

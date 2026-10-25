@@ -149,6 +149,26 @@ export function FlowField({ prediction, capabilities, onTier }: FlowFieldProps) 
       trails,
     }
     stages.current = built
+
+    /**
+     * Fill the new stages before the first frame reads them.
+     *
+     * Everything here is also kept current by an effect of its own, and that is exactly why this
+     * is needed: those effects watch the data, not the stages, so none of them re-runs when the
+     * stages are rebuilt underneath. A tier change rebuilds them -- and the frame-time probe
+     * changes the tier on almost every visit, because it starts conservatively and climbs.
+     *
+     * The result was a fresh `FieldReconstruction` that nothing ever wrote to. Its velocity
+     * texture stayed zero, so the particles sat exactly where they were seeded and the tunnel
+     * showed a bright band at the inlet and nothing anywhere else. It only reproduced when the
+     * tier was left on `auto`, which is the default, and never when a tier was pinned by hand,
+     * which is how every test and every captured screenshot had been run.
+     */
+    if (prediction) built.field.update(renderer, prediction.pod, alphaDeg)
+    built.mask.update(renderer, section)
+    built.particles.setColormap(colormap === 'cividis' ? 1 : 0)
+    built.trails.setIntensity(trailIntensity)
+
     onTier?.({ tier, medianFrameMs: 0, automatic: tierChoice === 'auto' })
 
     return () => {
@@ -159,7 +179,9 @@ export function FlowField({ prediction, capabilities, onTier }: FlowFieldProps) 
       built.trails.dispose()
     }
     // `size` is deliberately excluded: a resize is handled below, not by rebuilding every stage
-    // and losing the simulation state.
+    // and losing the simulation state. So are the four values seeded above -- they are read as
+    // they stand when the stages are built, and an effect each keeps them current afterwards;
+    // listing them here would rebuild every stage on every prediction, sixty times a second.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [atlas, capabilities.precision, tier, renderer, onTier, tierChoice])
 
