@@ -8,6 +8,16 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
+  /**
+   * One worker on CI.
+   *
+   * The runner has no GPU, so the flow field goes through SwiftShader at around a frame a second
+   * at the top tier. Two of these tests running side by side do not take twice as long, they take
+   * turns being starved, and both time out. This was invisible while the velocity field was never
+   * written on a tier change -- frozen particles are cheap to draw -- and surfaced the moment the
+   * renderer started doing the work it is supposed to do.
+   */
+  workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : [['list']],
   use: {
     baseURL: BASE_URL,

@@ -185,14 +185,14 @@ test.describe('the flow field is visible across the domain', () => {
   /**
    * Let the trail buffer forget before judging it.
    *
-   * The buffer keeps `exp(-2.6 * dt)` of itself per frame, so a hundred frames erases it
-   * completely. Without this wait the assertion can pass on the picture the *previous* stages
+   * The buffer keeps `exp(-2.6 * dt)` of itself per frame, and the step clamps `dt` to 1/30, so
+   * sixty frames leave half a per cent of it. Without this wait the assertion can pass on the picture the *previous* stages
    * left behind, which is exactly how the first version of this test failed to catch the bug it
    * was written for.
    */
   async function forgetTrails(page: import('@playwright/test').Page) {
     const from = await page.evaluate(() => window.__frames ?? 0)
-    await page.waitForFunction((start: number) => (window.__frames ?? 0) > start + 150, from, {
+    await page.waitForFunction((start: number) => (window.__frames ?? 0) > start + 60, from, {
       timeout: 120_000,
     })
   }
@@ -232,7 +232,7 @@ test.describe('the flow field is visible across the domain', () => {
           return Math.min(sample.middle - background.middle, sample.outlet - background.outlet)
         },
         {
-          timeout: 180_000,
+          timeout: 240_000,
           message: `${what}: the flow never reached the middle or the outlet of the domain`,
         },
       )
@@ -253,7 +253,7 @@ test.describe('the flow field is visible across the domain', () => {
   }
 
   test('on a default load, and after the particle tier changes', async ({ page }) => {
-    test.setTimeout(300_000)
+    test.setTimeout(600_000)
     await installCanvasProbe(page)
 
     // No tier in the link: the automatic probe decides, which is what a visitor gets.
