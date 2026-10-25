@@ -206,7 +206,7 @@ Hand-written GLSL on WebGL2, no post-processing library:
 
 A capability probe runs before the first frame and a frame-time probe adjusts afterwards, so the
 particle count matches the hardware: 65k, 262k or 1 048 576. On an M4 Pro every tier is
-vsync-bound at 8.3 ms, which is the honest way of saying the GPU work is too small to measure
+vsync-bound at 8.4 ms, which is the honest way of saying the GPU work is too small to measure
 against a 120 Hz refresh. [`docs/perf.md`](docs/perf.md) has the method and the numbers.
 
 ## Honest limits
