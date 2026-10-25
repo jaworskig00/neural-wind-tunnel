@@ -17,18 +17,21 @@ https://<host>/#v=1&au=<6 floats>&al=<6 floats>&a=<deg>&view=<mode>&cam=<az,el,d
 Ampersand-separated `key=value` pairs. Floats use a dot as the decimal separator and are
 written with at most four decimals. Lists are comma-separated with no spaces.
 
-| Key     | Required       | Type     | Default     | Meaning                                                                                                                         |
-| ------- | -------------- | -------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `v`     | yes            | int      | —           | Contract version. A reader that does not recognise the value loads defaults and shows a notice.                                 |
-| `au`    | yes unless `p` | 6 floats | —           | Upper-surface CST weights, `cst_u_0` first.                                                                                     |
-| `al`    | yes unless `p` | 6 floats | —           | Lower-surface CST weights, `cst_l_0` first.                                                                                     |
-| `p`     | no             | string   | —           | Preset name instead of explicit weights: `naca0012`, `naca2412`, `naca4412`, `naca23012`. Ignored if `au` and `al` are present. |
-| `a`     | no             | float    | `2.0`       | Angle of attack in degrees, clamped to the trained range.                                                                       |
-| `view`  | no             | enum     | `particles` | `particles`, `streamlines`, `both` or `surface`.                                                                                |
-| `cam`   | no             | 3 floats | `45,18,3.2` | Camera azimuth and elevation in degrees, then distance in chords.                                                               |
-| `cmap`  | no             | enum     | `coolwarm`  | Surface colormap: `coolwarm` or `cividis`, the latter colour-blind safe.                                                        |
-| `tier`  | no             | enum     | auto        | Particle count override: `low`, `mid` or `high`. Absent means the FPS probe decides.                                            |
-| `chart` | no             | enum     | `cp`        | Which chart is open: `cp`, `polar` or `none`.                                                                                   |
+The preset names below are the whole set; `src/geometry/presets.ts` is the canonical list, and a
+reader should treat any name it does not recognise as a malformed value rather than assume one.
+
+| Key     | Required       | Type     | Default     | Meaning                                                                                                                                                                                  |
+| ------- | -------------- | -------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `v`     | yes            | int      | —           | Contract version. A reader that does not recognise the value loads defaults and shows a notice.                                                                                          |
+| `au`    | yes unless `p` | 6 floats | —           | Upper-surface CST weights, `cst_u_0` first.                                                                                                                                              |
+| `al`    | yes unless `p` | 6 floats | —           | Lower-surface CST weights, `cst_l_0` first.                                                                                                                                              |
+| `p`     | no             | string   | —           | Preset name instead of explicit weights: `naca0008`, `naca0012`, `naca2412` or `naca4412`. Ignored if `au` and `al` are present. An unknown name falls back to `naca2412` with a notice. |
+| `a`     | no             | float    | `2.0`       | Angle of attack in degrees, clamped to the trained range.                                                                                                                                |
+| `view`  | no             | enum     | `particles` | `particles`, `streamlines`, `both` or `surface`.                                                                                                                                         |
+| `cam`   | no             | 3 floats | `45,18,3.2` | Camera azimuth and elevation in degrees, then distance in chords.                                                                                                                        |
+| `cmap`  | no             | enum     | `coolwarm`  | Surface colormap: `coolwarm` or `cividis`, the latter colour-blind safe.                                                                                                                 |
+| `tier`  | no             | enum     | auto        | Particle count override: `low`, `mid` or `high`. Absent means the FPS probe decides.                                                                                                     |
+| `chart` | no             | enum     | `cp`        | Which chart is open: `cp`, `polar` or `none`.                                                                                                                                            |
 
 ## Reader rules
 

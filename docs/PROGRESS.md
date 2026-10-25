@@ -758,3 +758,21 @@ model, not noise — and the numbers that back it, including the solver's own er
 published data, which stacks on top of the surrogate's.
 
 **Commit.** see `git log`
+
+## Post-1.0.0 — the preset contract had drifted
+
+**Found while answering a question about the sister project.** `docs/URL-STATE.md` named a preset
+that does not exist (`naca23012`) and omitted one that does (`naca0008`). That document is the
+deep-link contract the explorer reads, so the error sat in the one place it could do real damage —
+and the explorer's own ADR-002 cites having read it.
+
+**Fixed, and guarded.** The row now names all four presets, points at `src/geometry/presets.ts` as
+canonical, and states the fallback the reader actually performs (verified against
+`urlState.ts`, which pushes a notice naming the unknown section). `src/geometry/presets.test.ts`
+parses the document and compares it to `PRESETS`; deleting a name from the table turns it red,
+which I checked rather than assumed.
+
+**Also tidied.** Two entries describing M2 work were still sitting under `[Unreleased]` after the
+1.0.0 backfill. They shipped; they are now filed under `0.3.0-m2`.
+
+**Commit.** see `git log`

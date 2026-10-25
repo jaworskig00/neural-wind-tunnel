@@ -8,16 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Pressure stations no longer interpolate across the singular control points at a sharp trailing
-  edge. The first `dataset-v1` assets carried pressure coefficients up to 7e15 in the last station
-  of each surface on about 2 % of rows; the dataset was regenerated and the Release assets replaced.
-  See ADR-018.
-
-### Changed
-
-- `docs/DATASET-SCHEMA.md`: the sampled incidence range is now -6 to +10 degrees rather than
-  -6 to +14, and the document publishes the measured per-incidence convergence rate. Amended in
-  place rather than version-bumped because no dataset Release exists yet; see ADR-016.
+- `docs/URL-STATE.md` listed a preset that does not exist (`naca23012`) and omitted one that does
+  (`naca0008`). The document is the deep-link contract the sister project reads, so the list was
+  wrong where it mattered most. It now names all four, points at `src/geometry/presets.ts` as the
+  canonical list, and states what a reader does with a name it does not recognise.
+- `src/geometry/presets.test.ts` holds the document to the code, so the list cannot drift again
+  without a test going red.
 
 ## [1.0.0] - 2026-10-24
 
@@ -173,6 +169,16 @@ Milestone M2: the dataset.
 
 - Sobol sampling is now drawn in fixed blocks, so a smaller run is a prefix of a larger one.
   Without it, two runs of different sizes produced different designs for the same index.
+- Pressure stations no longer interpolate across the singular control points at a sharp trailing
+  edge. The first `dataset-v1` assets carried pressure coefficients up to 7e15 in the last station
+  of each surface on about 2 % of rows; the dataset was regenerated and the Release assets
+  replaced. See ADR-018.
+
+### Changed
+
+- `docs/DATASET-SCHEMA.md`: the sampled incidence range is now -6 to +10 degrees rather than
+  -6 to +14, and the document publishes the measured per-incidence convergence rate. Amended in
+  place rather than version-bumped because no dataset Release existed yet; see ADR-016.
 
 ## [0.2.0-m1] - 2026-10-24
 
