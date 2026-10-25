@@ -800,3 +800,36 @@ a deployed URL, a `(camber, position, thickness)` to CST mapping that exists onl
 README advertising a feature that does not exist was the worst-placed defect in the repository.
 
 **Commit.** see `git log`
+
+## M10 — deployment
+
+**GitHub Pages**, live at <https://jaworskig00.github.io/neural-wind-tunnel/>, published by
+`.github/workflows/pages.yml` on every push to `main`. Nothing but the frontend went out: no
+backend, no database, nothing to operate. The model and the mode atlas are static files on the
+app's own origin, the design state is the URL hash, and the assistant talks to the visitor's own
+provider from their browser.
+
+**Cloudflare Pages was ruled out by a number, not a preference.** It caps one file at 25 MiB and
+the ONNX Runtime WebAssembly binary is 27 MB, so keeping the opt-in ONNX path would have meant
+moving that file to R2. GitHub Pages allows 100 MB per file and took the build unchanged.
+
+**One line of code.** `base: process.env['PAGES_BASE'] ?? '/'`, set only by the Pages job. Every
+artifact already resolved through `import.meta.env.BASE_URL`, so there were no absolute paths to
+hunt down — a decision made back in M5 that cost nothing then and paid for itself here. Verified
+before pushing by serving the built site under `/neural-wind-tunnel/` locally and loading it.
+
+**What the deploy cost.** `frame-ancestors` had to come out of the policy. GitHub Pages cannot
+send headers, the policy travels in a meta element, and a browser ignores that directive there —
+while logging an error about it on every single load. Shipping a console error to every visitor
+for a line that never applied is worse than not having the line. Clickjacking protection waits for
+a host that can send headers; it is in `QUESTIONS.md`.
+
+**Verified live, not assumed**: Cl 1.2371 on NACA 4412 at 6 degrees matching the local build,
+solver overlay drawn, 1 048 576 particles at 1.5 ms p95, and an empty console.
+
+**README gained a `Using it` section** — what to drag, what each view and chart shows, what an em
+dash in the drag column means, how sharing works, and that the assistant needs no key. One claim
+in the first draft was wrong and got corrected before it shipped: the app does not tell you when
+your GPU lacks float render targets, it just falls back. The README now says that instead.
+
+**Commit.** see `git log`

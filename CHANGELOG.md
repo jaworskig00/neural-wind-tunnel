@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The app is deployed to GitHub Pages at <https://jaworskig00.github.io/neural-wind-tunnel/>,
+  built and published by `.github/workflows/pages.yml` on every push to `main`. Only the Pages
+  build sets a base path; local development, the Playwright suite and CI stay at `/`.
+- A `Using it` section in the README: what to drag, what the views and charts show, what `—` in
+  the drag column means, how sharing works and what the assistant does without a key.
+
 ### Fixed
 
 - `docs/URL-STATE.md` listed a preset that does not exist (`naca23012`) and omitted one that does
@@ -14,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   canonical list, and states what a reader does with a name it does not recognise.
 - `src/geometry/presets.test.ts` holds the document to the code, so the list cannot drift again
   without a test going red.
+- `frame-ancestors` is gone from the Content Security Policy. A browser ignores it when it
+  arrives in a meta element and logs an error saying so on every page load, which on a static host
+  that cannot send headers meant shipping a console error to every visitor for a directive that
+  never applied.
 - The README, `docs/URL-STATE.md`, `docs/PLAN.md` and `docs/DATASET-SCHEMA.md` described the
   sister project as consuming this dataset and deep-linking into this app. It does neither: it
   chose its own parametrisation and its ADR-002 declines both. All four now say what is actually

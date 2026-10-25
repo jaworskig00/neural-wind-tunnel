@@ -307,7 +307,7 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 
 ### M10 — Deployment (placeholder)
 
-- [ ] **T10.1** Decide the target (Cloudflare Pages, GitHub Pages or Hetzner) and wire it up. Blocked on a human decision; recorded in `QUESTIONS.md`. The app must remain static-friendly until then: no server-side rendering, no required backend, all artifacts fetched over plain HTTP.
+- [x] **T10.1** GitHub Pages, chosen 2026-10-25 and wired up in `.github/workflows/pages.yml`. Live at <https://jaworskig00.github.io/neural-wind-tunnel/>. Cloudflare Pages was ruled out by its 25 MiB per-file limit, which the 27 MB ONNX Runtime WebAssembly binary exceeds. The app stayed static-friendly throughout: no server, no database, no backend of any kind.
 
 ---
 

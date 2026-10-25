@@ -7,19 +7,6 @@ Format: one dated entry per item, with the default that was applied in the meant
 
 ## Needs a human decision
 
-### Q1 — Deployment target
-
-**Status.** open · **Blocks.** M10 only
-Cloudflare Pages, GitHub Pages or Hetzner. Deliberately deferred. The app stays static-friendly
-until this is answered: no server-side rendering, no required backend, every artifact fetched over
-plain HTTP. Nothing else in the plan depends on it.
-
-### Q2 — Live demo URL in the README
-
-**Status.** open · **Blocks.** the demo link in M9
-Follows directly from Q1. Until then the README says "not deployed yet" rather than carrying a
-dead link.
-
 ### Q9 — The deep link from the sister project
 
 **Status.** open · **Blocks.** nothing
@@ -62,6 +49,25 @@ Bring-your-own-key only in v1 (ADR-008). A proxy would mean infrastructure, an o
 a departure from a purely static deployment. In the v2 backlog.
 
 ## Resolved
+
+### Q1 — Deployment target, and Q2, the demo link
+
+**Resolved 2026-10-25.** GitHub Pages, live at
+<https://jaworskig00.github.io/neural-wind-tunnel/>, deployed by `.github/workflows/pages.yml` on
+every push to `main`. Nothing but the frontend is deployed: there is no backend and no database,
+because there never was one to build — the model and the mode atlas are static files fetched from
+the app's own origin, the design state lives in the URL hash, and the assistant talks to the
+visitor's chosen provider from their own browser.
+
+Cloudflare Pages was ruled out on a measurement rather than a preference: it caps a single file at
+25 MiB, and the ONNX Runtime WebAssembly binary is 27 MB. Keeping it would have meant moving that
+file to R2 or dropping the opt-in ONNX path. GitHub Pages allows 100 MB per file, so the build
+deploys unchanged.
+
+The one thing given up is HTTP headers, which GitHub Pages cannot set. The Content Security Policy
+travels in a meta element instead, and `frame-ancestors` had to be dropped from it — a browser
+ignores that directive outside a header and logs an error on every load. Clickjacking protection
+therefore waits for a host that can send headers.
 
 ### Q7 — Which inference backend should be the default
 

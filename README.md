@@ -10,9 +10,72 @@ every slider movement. The GPU reconstructs that field and advects a million par
 
 ![The wind tunnel, sweeping incidence from -4 to +8 degrees](docs/media/hero.gif)
 
-**Live demo:** not deployed yet · **Accuracy:** [`docs/accuracy.md`](docs/accuracy.md) ·
-**Performance:** [`docs/perf.md`](docs/perf.md) · **Decisions:**
-[`docs/DECISIONS.md`](docs/DECISIONS.md)
+**Live demo:** <https://jaworskig00.github.io/neural-wind-tunnel/> · **Accuracy:**
+[`docs/accuracy.md`](docs/accuracy.md) · **Performance:** [`docs/perf.md`](docs/perf.md) ·
+**Decisions:** [`docs/DECISIONS.md`](docs/DECISIONS.md)
+
+## Using it
+
+Open the demo. Nothing to install, nothing to sign in to, and no key for anything.
+
+**The first half minute.** Pick a section on the right — `NACA 2412` is a good start — and drag
+**Incidence**. The header updates on every frame: lift, drag, quarter-chord moment and lift-to-drag
+ratio. The flow redraws with them, because the surrogate re-predicts the whole field each time you
+move, not just the forces.
+
+**Changing the shape.** `Thinner` / `Thicker` scale the thickness distribution and `Less camber` /
+`More camber` the camber line, independently — in CST weight space the two separate cleanly, so one
+does not disturb the other. `CST weights` at the bottom opens the twelve raw Bernstein weights if
+you want them. **Measured** reports what you actually made: maximum thickness and camber, where
+they sit, and the nose radius. Every slider stops at the edge of the range the model was trained
+on, so you cannot accidentally ask it to extrapolate.
+
+**Choosing what to look at.** Under **Flow field**:
+
+| Control                           | What it does                                                                 |
+| --------------------------------- | ---------------------------------------------------------------------------- |
+| `particles` `lines` `both` `none` | Advected particles, streamlines, both, or just the pressure on the surface   |
+| `Trails`                          | How long the particles smear. Low is crisp, high is silky and slower to read |
+| `auto` `low` `mid` `high`         | Particle count. `auto` probes your frame times and settles on its own        |
+
+Drag in the viewport to orbit, scroll to zoom.
+
+**Reading the charts.** The dock at the bottom right toggles between `pressure` and `polars`.
+
+- **pressure** plots Cp against chord with the axis inverted, the way the suction side is normally
+  drawn on top. On one of the four stock sections a grey curve appears behind the blue one: that is
+  the exact solver for the same case, so you can see the surrogate's error rather than take it on
+  trust. Edit the shape and the grey curve disappears, because no reference exists for a section
+  nobody solved.
+- **polars** sweeps the whole trained incidence range and draws lift against incidence and lift
+  against drag. The amber dot is where you are. The left edge of the drag polar is the useful part
+  of a design.
+
+**When drag shows `—`.** The viscous calculation did not converge for that case, most often near
+the top of the incidence range. The app would rather show nothing than a plausible number.
+
+**Sharing.** The address bar is the state. Every change rewrites the hash, so copying the URL
+copies the exact section, incidence, view and camera. Opening a link that asks for something
+outside the trained range clamps it and says so in a banner rather than pretending.
+
+**The assistant.** `Assistant` next to the title. It works with no API key: three recorded
+conversations are built in, and their tool calls run for real against whatever section you have
+open, so the numbers in the answers are yours and not a recording. Each tool call it makes is
+listed by name with an `undo` beside it. To go beyond the recordings, open the provider menu in the
+panel header and paste a key — Anthropic, or any OpenAI-compatible endpoint including one on your
+own machine. The key stays in your browser's local storage and goes only to the provider you
+picked.
+
+**Keyboard.** Every control is a native element, so `Tab` moves between them and the arrow keys,
+`Home` and `End` drive the sliders. There are no custom shortcuts to learn. The camera is the one
+thing you cannot drive from the keyboard; everything it shows is also in the header and the charts.
+
+**If it runs badly.** Pick `low` under the particle count, or `none` to turn the field off and keep
+the surface pressure and the charts. On a GPU without 32-bit float render targets the field drops
+to half precision by itself; if the mode atlas cannot be loaded at all, the flow simply does not
+appear and everything else — the coefficients, the pressure plot, the polars, the assistant —
+carries on. The status line at the bottom left always says which inference backend is running, the
+measured p95 and how many particles are actually being drawn.
 
 ## The claim, and what backs it
 
