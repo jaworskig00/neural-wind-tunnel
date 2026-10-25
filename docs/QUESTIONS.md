@@ -25,6 +25,18 @@ The cheapest shape, if it is ever wanted: this app accepts an optional `naca=m,p
 the weights itself. Readers ignore unknown keys, so that adds no contract version, and the
 explorer then needs to know nothing about CST.
 
+### Q10 — Trail brightness depends on the size of the viewport
+
+**Status.** open · **Blocks.** nothing · **Cosmetic**
+The trail buffer is the size of the canvas, so the same particle count deposited into a smaller
+canvas lands in fewer texels and the flow reads brighter. Opening the assistant panel narrows the
+viewport and visibly brightens the field.
+
+Deposition is already normalised by particle count and, since the fix recorded in `PROGRESS.md`,
+by frame time. Area is the third term and is not normalised. The correction is the ratio of a
+reference area to the current one, which the trail buffer knows at resize; it is left undone
+because it changes the look at every size and deserves to be re-tuned rather than bolted on.
+
 ## Deferred by decision, recorded for completeness
 
 ### Q3 — Reynolds number as a model input

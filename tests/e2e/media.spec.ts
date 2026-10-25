@@ -33,6 +33,11 @@ test.describe('demo media', () => {
   test.skip(!CAPTURE, 'set CAPTURE_MEDIA=1 to capture')
   test.describe.configure({ mode: 'serial' })
 
+  /** Park the pointer off every interactive element, so no hover readout is in the capture. */
+  async function parkPointer(page: import('@playwright/test').Page) {
+    await page.mouse.move(8, 200)
+  }
+
   async function settle(page: import('@playwright/test').Page, ms: number) {
     await expect(page.getByTestId('inference-status')).toBeVisible()
     await page.waitForTimeout(ms)
@@ -41,19 +46,21 @@ test.describe('demo media', () => {
   // The default camera is the one the viewport was composed for; overriding it in a capture
   // mostly produces a worse version of the same picture.
   test('particles and the pressure colormap', async ({ page }) => {
-    await page.goto('/#v=1&p=naca4412&a=6&view=particles&tier=mid')
+    await page.goto('/#v=1&p=naca4412&a=6&view=particles')
     await settle(page, 1000)
     // The tier is pinned in the link rather than clicked, so the capture never races the probe,
     // and the wait is long because the particles are seeded in a band at the inflow: a capture
     // taken too early shows that band rather than a developed field.
-    await page.getByRole('slider', { name: 'Trails' }).fill('0.15')
+    await page.getByRole('slider', { name: 'Trails' }).fill('0.5')
     await page.waitForTimeout(9000)
+    await parkPointer(page)
     await page.screenshot({ path: 'docs/screenshots/particles.png' })
   })
 
   test('streamlines', async ({ page }) => {
     await page.goto('/#v=1&p=naca4412&a=8&view=streamlines')
     await settle(page, 3000)
+    await parkPointer(page)
     await page.screenshot({ path: 'docs/screenshots/streamlines.png' })
   })
 
@@ -61,6 +68,7 @@ test.describe('demo media', () => {
     await page.goto('/#v=1&p=naca0012&a=4&view=surface&cam=0,4,1.6')
     await settle(page, 2000)
     await expect(page.getByTestId('overlay-active')).toBeVisible()
+    await parkPointer(page)
     await page.screenshot({ path: 'docs/screenshots/pressure.png' })
   })
 
@@ -69,25 +77,32 @@ test.describe('demo media', () => {
     await settle(page, 1000)
     await page.getByRole('button', { name: 'polars' }).click()
     await expect(page.getByTestId('polar-status')).toContainText('swept')
+    await parkPointer(page)
     await page.screenshot({ path: 'docs/screenshots/polars.png' })
   })
 
   test('the assistant', async ({ page }) => {
-    await page.goto('/#v=1&p=naca2412&a=2&view=particles&tier=mid')
+    await page.goto('/#v=1&p=naca2412&a=2&view=particles')
     await settle(page, 1000)
-    await page.getByRole('slider', { name: 'Trails' }).fill('0.15')
+    // Turned down: the panel is the subject here, and opening it narrows the viewport, which
+    // concentrates the same particles into fewer texels and brightens the field (see Q10).
+    await page.getByRole('slider', { name: 'Trails' }).fill('0.2')
     await page.waitForTimeout(4000)
     await page.getByTestId('assistant-toggle').click()
     await page.getByRole('button', { name: /fifteen per cent thinner/ }).click()
     await expect(page.getByTestId('assistant-panel')).toContainText('% chord')
     await page.waitForTimeout(1500)
+    await parkPointer(page)
     await page.screenshot({ path: 'docs/screenshots/assistant.png' })
   })
 
   test('hero frames', async ({ page }) => {
-    await page.goto('/#v=1&p=naca2412&a=0&view=particles&tier=mid&cam=18,14,2.0')
+    await page.goto('/#v=1&p=naca2412&a=0&view=particles&cam=18,14,2.0')
     await settle(page, 1000)
-    await page.getByRole('slider', { name: 'Trails' }).fill('0.15')
+    // Turned up for the animation. Each step of the sweep gives the buffer a sixth of a second to
+    // build, against a trail time constant of about four tenths, so at the default exposure the
+    // flow never quite catches up with the incidence.
+    await page.getByRole('slider', { name: 'Trails' }).fill('1.1')
     await page.waitForTimeout(7000)
 
     // Sweep the incidence across the trained range and back, one frame per step. The surrogate
@@ -97,10 +112,11 @@ test.describe('demo media', () => {
     for (let i = 0; i <= 24; i += 1) stops.push(-4 + (12 * i) / 24)
     for (let i = 23; i > 0; i -= 1) stops.push(-4 + (12 * i) / 24)
 
+    await parkPointer(page)
     for (const [index, alpha] of stops.entries()) {
       // `fill` wants a value on the step grid exactly; a trailing zero is not one.
       await incidence.fill(String(Math.round(alpha * 10) / 10))
-      await page.waitForTimeout(90)
+      await page.waitForTimeout(160)
       await page.screenshot({
         path: `docs/media/frames/hero-${String(index).padStart(3, '0')}.png`,
         // The viewport alone: a clip that cuts the parameter panel in half looks like a bug.
