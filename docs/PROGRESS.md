@@ -776,3 +776,27 @@ which I checked rather than assumed.
 1.0.0 backfill. They shipped; they are now filed under `0.3.0-m2`.
 
 **Commit.** see `git log`
+
+## Post-1.0.0 — the README promised an integration that does not exist
+
+**Four documents claimed it.** The README said the explorer was "built on this dataset" and that
+"a design selected there deep-links into this wind tunnel"; `URL-STATE.md`, `PLAN.md` and
+`DATASET-SCHEMA.md` said the same in the present tense. None of it is true. The explorer chose its
+own parametrisation — continuous camber, camber position, thickness, incidence and Reynolds — and
+its ADR-002 explicitly declines both this dataset and the link. Its live bundle contains zero
+references to this project.
+
+**Why it slipped.** Those sentences were written during planning, when the shared dataset was the
+plan, and nothing re-read them afterwards. T9.4 asked that `QUESTIONS.md` list what is genuinely
+open, and I ticked it without checking what the sister repo had actually decided — so the single
+most open thing in the project was the one thing the file did not mention.
+
+**Fixed.** All four documents now describe the real state: the contract exists, is complete, and
+has no second reader. `QUESTIONS.md` gains Q9 with what connecting the two would actually take —
+a deployed URL, a `(camber, position, thickness)` to CST mapping that exists only in Python as
+`fit_cst`, and an answer for Reynolds, which is a sampled dimension there and fixed at 1e6 here.
+
+**Worth saying plainly.** For a project whose entire claim is that it states its own error, a
+README advertising a feature that does not exist was the worst-placed defect in the repository.
+
+**Commit.** see `git log`

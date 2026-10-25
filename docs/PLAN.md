@@ -136,8 +136,11 @@ tests/e2e         Playwright specs; unit tests sit next to the module they cover
 
 ### Data contracts shared with the sister project
 
-The sister repo **design-space-explorer** (D3 design-space explorer, built in parallel)
-consumes this project's dataset. Two documents are the contract and must not drift:
+The sister repo **design-space-explorer** (D3 design-space explorer, built in parallel) was to
+consume this project's dataset. It did not: it chose its own parametrisation, and its ADR-002
+declines both the dataset and the deep link. The two documents below are still the contract on
+this side, and still must not drift — they simply have no second reader. See Q9 in
+[`QUESTIONS.md`](QUESTIONS.md).
 
 - [`DATASET-SCHEMA.md`](DATASET-SCHEMA.md) — columns, units, conventions, file layout, versioning
 - [`URL-STATE.md`](URL-STATE.md) — the deep-link format, so the explorer can open a selected design here

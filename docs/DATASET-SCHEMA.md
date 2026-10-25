@@ -1,13 +1,17 @@
 # Dataset schema — contract version 1
 
-This document is a **contract**, not documentation of an implementation detail. The sister
-project [design-space-explorer](https://github.com/jaworskig00/design-space-explorer) consumes
-this dataset and is built in parallel, so any change here bumps the contract version, lands in
-`CHANGELOG.md`, and leaves the previous Release asset untouched.
+This document is a **contract**, not documentation of an implementation detail. It was written
+for the sister project
+[design-space-explorer](https://github.com/jaworskig00/design-space-explorer), built in parallel,
+which in the end chose its own parametrisation and does not consume this dataset (its ADR-002; see
+Q9 in [`QUESTIONS.md`](QUESTIONS.md)). The contract stands anyway: any change here bumps the
+version, lands in `CHANGELOG.md`, and leaves the previous Release asset untouched, because the
+`dataset-v1` Release is public and anyone may be reading it.
 
-Until this project's M2 lands, a consumer can generate schema-conformant placeholder data with
-`uv run python tools/stub_dataset.py --rows 5000 --out data/sample/stub.csv`. Switching to the
-real dataset is then a URL change and nothing else.
+The dataset itself is the `dataset-v1` Release. `uv run python tools/stub_dataset.py --rows 5000
+--out data/sample/stub.csv` still generates schema-conformant placeholder data, which was there so
+a consumer could start before M2 landed; a 2000-row slice of the real thing is committed under
+`data/sample/`.
 
 ## 1. Physical conventions
 

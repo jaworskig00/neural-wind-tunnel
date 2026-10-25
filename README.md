@@ -202,10 +202,21 @@ uv run ruff check . && uv run pytest
 
 ## Sister project
 
-[**design-space-explorer**](https://github.com/jaworskig00/design-space-explorer) — a D3 explorer
-for thousands of design variants, built on this dataset. A design selected there deep-links into
-this wind tunnel. The two repositories share no code, only two documents:
-[`docs/DATASET-SCHEMA.md`](docs/DATASET-SCHEMA.md) and [`docs/URL-STATE.md`](docs/URL-STATE.md).
+[**design-space-explorer**](https://jaworskig00.github.io/design-space-explorer/)
+([source](https://github.com/jaworskig00/design-space-explorer)) — a D3 explorer for thousands of
+design variants, built in parallel with this project.
+
+The two were planned to share a dataset and a deep link, and neither happened. The explorer
+generates its own sample from a different parametrisation — camber, camber position, thickness,
+incidence and Reynolds number, sampled continuously — and its ADR-002 records the decision not to
+consume this project's CST dataset. There is no button in it that opens a design here.
+
+The contract for that link exists on this side and is unused:
+[`docs/URL-STATE.md`](docs/URL-STATE.md) is a complete, versioned deep-link format, and
+[`docs/DATASET-SCHEMA.md`](docs/DATASET-SCHEMA.md) describes the dataset. Connecting the two would
+need three things that do not exist yet: a deployed URL to link to, a mapping from the explorer's
+`(camber, position, thickness)` onto twelve CST weights, and an honest answer for Reynolds number,
+which is a dimension there and fixed at 1e6 here. The two repositories share no code.
 
 ## Repository map
 

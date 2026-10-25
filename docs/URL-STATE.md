@@ -4,9 +4,11 @@ The full application state that matters for sharing lives in the URL hash, so an
 linked, bookmarked and reproduced. The hash is used rather than the query string so that a
 static host never sees the parameters and no server round trip is needed.
 
-This is also the deep-link contract for the sister project
-[design-space-explorer](https://github.com/jaworskig00/design-space-explorer), which links a
-selected design into this app.
+This was also meant to be the deep-link contract for the sister project
+[design-space-explorer](https://github.com/jaworskig00/design-space-explorer). Nothing consumes it
+yet: that project chose a different parametrisation and does not link into this app (its ADR-002).
+The format below is therefore a published contract with no second reader — written for one, and
+still the format this app itself reads and writes.
 
 ## Format
 

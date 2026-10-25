@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   canonical list, and states what a reader does with a name it does not recognise.
 - `src/geometry/presets.test.ts` holds the document to the code, so the list cannot drift again
   without a test going red.
+- The README, `docs/URL-STATE.md`, `docs/PLAN.md` and `docs/DATASET-SCHEMA.md` described the
+  sister project as consuming this dataset and deep-linking into this app. It does neither: it
+  chose its own parametrisation and its ADR-002 declines both. All four now say what is actually
+  true, and `docs/QUESTIONS.md` carries the link as Q9, open, blocking nothing.
 
 ## [1.0.0] - 2026-10-24
 

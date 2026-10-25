@@ -20,6 +20,24 @@ plain HTTP. Nothing else in the plan depends on it.
 Follows directly from Q1. Until then the README says "not deployed yet" rather than carrying a
 dead link.
 
+### Q9 — The deep link from the sister project
+
+**Status.** open · **Blocks.** nothing
+Planned from the first session, never built, and this document said nothing about it until after
+v1.0.0 — which is the kind of omission this file exists to prevent.
+
+`design-space-explorer` chose its own parametrisation and its ADR-002 declines to consume this
+project's dataset or render a link here. `URL-STATE.md` is a finished contract with no second
+reader. Turning the link on needs three things: a deployed URL (Q1), a mapping from that
+project's `(camber, camber_pos, thickness)` onto twelve CST weights — which exists in Python as
+`fit_cst` in `tools/solver/geometry.py` but has no TypeScript counterpart — and a decision about
+Reynolds number, which is a sampled dimension there and fixed at 1e6 here, so a linked row would
+silently change meaning.
+
+The cheapest shape, if it is ever wanted: this app accepts an optional `naca=m,p,t` key and fits
+the weights itself. Readers ignore unknown keys, so that adds no contract version, and the
+explorer then needs to know nothing about CST.
+
 ## Deferred by decision, recorded for completeness
 
 ### Q3 — Reynolds number as a model input
