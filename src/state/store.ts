@@ -80,7 +80,7 @@ export const useAppStore = create<AppState>((set) => ({
   presetId: DEFAULT_PRESET_ID,
   view: 'particles',
   colormap: 'coolwarm',
-  trailIntensity: 0.5,
+  trailIntensity: 1,
   tier: 'auto',
   motion: 'system',
 
@@ -168,7 +168,7 @@ export const useAppStore = create<AppState>((set) => ({
       presetId: DEFAULT_PRESET_ID,
       view: 'particles',
       colormap: 'coolwarm',
-      trailIntensity: 0.5,
+      trailIntensity: 1,
       tier: 'auto',
       motion: 'system',
     })
