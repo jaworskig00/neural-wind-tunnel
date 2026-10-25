@@ -900,3 +900,21 @@ picture improved — improvement is not correctness. And a test suite that only 
 it finds convenient will certify an app nobody can use.
 
 **Commit.** see `git log`
+
+## Post-deploy — the performance numbers had been measuring the bug
+
+Every figure in `docs/perf.md` was taken by `tests/e2e/performance.spec.ts`, which pins a tier by
+clicking it — the exact path on which the rebuilt velocity field was never written. So the renderer
+was timed drawing frozen particles, not advecting them.
+
+Re-measured with the field working: on the M4 Pro nothing meaningful changes, because that machine
+was vsync-bound at 8.4 ms whatever it was asked to do. Under software rendering the high tier goes
+from 34 ms to 178 ms per frame, the middle from 34 to 50, and a CI runner from 510 ms to over a
+second. The sentence the old table supported — "on a software renderer the low tier still holds 60
+frames per second" — was wrong by a factor of five at the top tier.
+
+The document now carries the new numbers and an explanation of why the old ones existed, rather
+than a silent replacement. The end-to-end budget went from two minutes to five for the same reason:
+the suite is now timing work that actually happens.
+
+**Commit.** see `git log`

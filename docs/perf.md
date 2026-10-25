@@ -35,15 +35,22 @@ Dragging a slider changes the design, so all five run; orbiting the camera runs 
 
 Browser at a 1408 x 1394 drawing buffer, measured over 200 frames after discarding the first 40.
 
-| Tier | Particles | Median frame | p95    |
-| ---- | --------- | ------------ | ------ |
-| low  | 65 536    | 8.3 ms       | 8.7 ms |
-| mid  | 262 144   | 8.3 ms       | 9.9 ms |
-| high | 1 048 576 | 8.3 ms       | 9.9 ms |
+| Tier | Particles | Median frame | p95     |
+| ---- | --------- | ------------ | ------- |
+| low  | 65 536    | 8.4 ms       | 9.8 ms  |
+| mid  | 262 144   | 8.4 ms       | 9.9 ms  |
+| high | 1 048 576 | 8.4 ms       | 10.2 ms |
 
-Every tier lands on exactly 8.3 ms, which is 120 frames per second: the loop is bound by the
+**Re-measured 2026-10-26, and the reason matters.** The first set of numbers here was taken while
+a bug left the velocity field unwritten whenever the particle tier changed — which is exactly what
+pinning a tier in a test does. The particles were frozen, and drawing a frozen particle is cheaper
+than advecting one. The numbers happen to be almost identical because this machine was never GPU
+bound in the first place, but the old ones were not measuring what they claimed to, and that is
+worth saying rather than quietly replacing them.
+
+Every tier lands on 8.4 ms, which is 120 frames per second: the loop is bound by the
 display's refresh rate, not by the GPU. Raising the drawing buffer to 3200 x 2018 changed nothing —
-still 8.3 ms at a million particles.
+still 8.4 ms at a million particles.
 
 **So the honest statement is not "a million particles at 120 fps" but "the particle work is too
 small to measure against a 120 Hz vsync on this hardware".** The plan's budget of 60 fps at 500 000
@@ -53,29 +60,35 @@ real cost could not be isolated from the frame cadence. Isolating it would need
 
 ## ANGLE SwiftShader, software rendering
 
-The slowest thing this will ever run on: no GPU at all, running in continuous integration. Measured
-by `tests/e2e/performance.spec.ts` over 150 frames after discarding the first 30.
+The slowest thing this will ever run on: no GPU at all. Measured by
+`tests/e2e/performance.spec.ts` over 55 frames after discarding the first 15, on the same laptop
+as above with ANGLE forced onto SwiftShader.
 
 | Tier | Particles | Median frame | p95      |
 | ---- | --------- | ------------ | -------- |
-| low  | 65 536    | 16.7 ms      | 16.8 ms  |
-| mid  | 262 144   | 33.7 ms      | 35.8 ms  |
-| high | 1 048 576 | 34.2 ms      | 108.5 ms |
+| low  | 65 536    | 19.5 ms      | 20.7 ms  |
+| mid  | 262 144   | 49.9 ms      | 66.4 ms  |
+| high | 1 048 576 | 177.7 ms     | 377.8 ms |
 
-This is the measurement that justifies the tiering. On a software renderer the low tier still holds
-60 frames per second, the middle one halves to 30, and the high one is visibly unwell — a median of
-34 ms with a p95 three times that, which is the signature of frames that occasionally take far
-longer than the rest.
+This is the measurement that justifies the tiering, and it is the one the earlier bug distorted
+most. Advecting a particle and drawing a frozen one cost very different amounts, and these numbers
+were previously taken with a velocity field that was never written — a frozen field reads as a
+renderer five times faster than it is.
+
+With the field actually moving, the low tier holds about 50 frames per second, the middle one
+drops to 20, and the high one manages between five and six with a p95 at twice its median. The
+probe exists precisely so that nobody without a GPU is handed the high tier.
 
 ## A GitHub runner, no GPU, shared cores
 
 The same spec, on the machine continuous integration happens to get.
 
-| Tier | Particles | Median frame |
-| ---- | --------- | ------------ |
-| high | 1 048 576 | 510 ms       |
+| Tier | Particles | Median frame  |
+| ---- | --------- | ------------- |
+| high | 1 048 576 | over 1 000 ms |
 
-Two frames per second. This is not a defect to fix, it is the floor the tiering exists for, and it
+Around one frame per second, and slower than the 510 ms recorded before the velocity field was
+fixed, for the same reason the table above moved. This is not a defect to fix, it is the floor the tiering exists for, and it
 is why the end-to-end suite asserts only that the loop keeps producing frames rather than any
 threshold on the median. A pass or fail on a shared runner's frame time measures the runner.
 

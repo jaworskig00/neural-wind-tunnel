@@ -59,9 +59,16 @@ async function measureFrames(page: import('@playwright/test').Page): Promise<Fra
 }
 
 test.describe('flow field performance', () => {
-  // Serial, and with room: these run on a shared runner with no GPU, where a frame at the high
-  // tier can take a tenth of a second, and running them alongside the rest only makes that worse.
-  test.describe.configure({ mode: 'serial', timeout: 120_000 })
+  /**
+   * Serial, and with a great deal of room.
+   *
+   * These run on a shared runner with no GPU. The budget used to be two minutes and that was
+   * enough -- until the velocity field started being written on a tier change, at which point the
+   * particles began actually moving and a high-tier frame under SwiftShader went from cheap to
+   * well over a second. The old numbers here, and in `docs/perf.md`, were measured against a
+   * frozen field and were never worth anything.
+   */
+  test.describe.configure({ mode: 'serial', timeout: 300_000 })
 
   for (const tier of ['low', 'mid', 'high'] as const) {
     test(`sustains a frame loop at the ${tier} tier`, async ({ page }) => {

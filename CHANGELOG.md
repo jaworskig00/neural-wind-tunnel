@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/perf.md` re-measured. Every frame-time figure in it had been taken with a tier pinned by
+  hand, which is exactly the path on which the velocity field was never written, so the renderer
+  was timed drawing frozen particles rather than advecting them. On the laptop's GPU the numbers
+  barely move, because it was vsync-bound either way; under software rendering the high tier goes
+  from 34 ms to 178 ms, and on a CI runner from 510 ms to over a second. The document says so
+  rather than replacing the old numbers quietly.
+
 ### Fixed
 
 - **The flow field was dead on a default load.** Changing the particle tier rebuilds every GPU
