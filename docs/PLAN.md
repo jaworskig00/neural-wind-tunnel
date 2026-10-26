@@ -46,7 +46,7 @@ Nothing in this plan requires a paid service, an API key or a human decision.
 - A real CFD solver in the browser. This is a surrogate, and the UI says so.
 - Turbulence, compressibility, separation modelling, 3D wings (v1).
 - Accounts, persistence, telemetry, monetisation.
-- A deployment pipeline (M10 placeholder; the app stays static-friendly throughout).
+- A deployment pipeline (M10; the app stays static-friendly throughout).
 
 ### Target users
 
@@ -305,7 +305,7 @@ commit, push, checkbox ticked here, entry appended to [`PROGRESS.md`](PROGRESS.m
 **Acceptance.** A reviewer who has never seen the project understands what it is, how it works and what it cannot do, in under five minutes of reading.
 **Verify.** CI green on the tagged commit; all media present; plan fully ticked.
 
-### M10 — Deployment (placeholder)
+### M10 — Deployment
 
 - [x] **T10.1** GitHub Pages, chosen 2026-10-25 and wired up in `.github/workflows/pages.yml`. Live at <https://jaworskig00.github.io/neural-wind-tunnel/>. Cloudflare Pages was ruled out by its 25 MiB per-file limit, which the 27 MB ONNX Runtime WebAssembly binary exceeds. The app stayed static-friendly throughout: no server, no database, no backend of any kind.
 

@@ -4,7 +4,11 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2026-10-26
+
+Deployment, and the fixes that deployment exposed. Everything below was found after `v1.0.0` was
+tagged, which is why that tag should not be the one anybody clones: the app it builds renders no
+flow field at the default settings.
 
 ### Fixed
 

@@ -141,7 +141,7 @@ view and camera — and says so if it had to clamp anything.
 ```mermaid
 flowchart LR
   subgraph offline["Offline · Python"]
-    S["Panel method<br/>+ integral BL"] --> D["Sobol over CST<br/>~40k cases"]
+    S["Panel method<br/>+ integral BL"] --> D["Sobol over CST<br/>8400 shapes x 8 alpha<br/>67 200 cases"]
     D --> P["POD<br/>32 modes"]
     D --> T["MLP 13 → 256³ → 163"]
     P --> T
@@ -247,7 +247,7 @@ half an hour on twelve cores, and `--help` on each command explains the knobs:
 
 ```bash
 uv sync
-uv run python -m tools.dataset.run       # solve ~40k cases into parquet shards
+uv run python -m tools.dataset.run       # solve 8400 shapes at 8 incidences into parquet
 uv run python -m tools.dataset.pod       # 32-mode POD basis
 uv run python -m tools.dataset.build     # assemble, validate, publish
 uv run python -m tools.train.train       # train
@@ -277,9 +277,11 @@ consume this project's CST dataset. There is no button in it that opens a design
 The contract for that link exists on this side and is unused:
 [`docs/URL-STATE.md`](docs/URL-STATE.md) is a complete, versioned deep-link format, and
 [`docs/DATASET-SCHEMA.md`](docs/DATASET-SCHEMA.md) describes the dataset. Connecting the two would
-need three things that do not exist yet: a deployed URL to link to, a mapping from the explorer's
-`(camber, position, thickness)` onto twelve CST weights, and an honest answer for Reynolds number,
-which is a dimension there and fixed at 1e6 here. The two repositories share no code.
+need two things that do not exist yet: a mapping from the explorer's
+`(camber, position, thickness)` onto twelve CST weights -- which exists in Python as `fit_cst` and
+has no TypeScript counterpart -- and an honest answer for Reynolds number, which is a sampled
+dimension there and fixed at 1e6 here, so a linked row would quietly change meaning. The two
+repositories share no code.
 
 ## Repository map
 
@@ -295,7 +297,7 @@ which is a dimension there and fixed at 1e6 here. The two repositories share no 
 | `src/shaders/`   | Hand-written GLSL                                                              |
 | `src/llm/`       | Tool schemas, dispatcher, provider adapters, recorded demos                    |
 | `docs/`          | Plan, decision records, data contracts, accuracy, performance, accessibility   |
-| `data/sample/`   | A committed slice of the dataset, for tests and for the sister project         |
+| `data/sample/`   | A committed 2000-row slice of the dataset, so the tests need no download       |
 
 ## Licence
 
