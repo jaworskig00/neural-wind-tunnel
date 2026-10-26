@@ -950,3 +950,27 @@ lesson is the same one as last week's: the cheap decisive experiment -- make the
 see if the symptom survives -- should have been the first move, not the sixth.
 
 **Commit.** see `git log`
+
+## The deep link, tunnel side
+
+`naca=m,p,t` — camber, camber position and thickness as fractions of chord — fitted to CST weights
+on arrival. `src/geometry/naca.ts` is a port of `naca4` and `fit_cst` from the solver, and
+`naca.test.ts` holds it to the Python against a committed fixture that includes two deliberately
+off-grid designs, because the fit is a least-squares solve and the two implementations can
+otherwise drift apart silently. The weights agree to six decimal places.
+
+**What the key deliberately does not carry.** Reynolds number, which here is one million and
+nothing else, and anybody else's coefficients. A design sampled at another Reynolds number opens
+here as a different case and the app says so in a notice; the lift and drag shown come from this
+project's surrogate and will not match what another tool showed for the same shape. A link that
+implied otherwise would be worse than no link, which is the reason this is a shape handoff rather
+than a "see the same design" button.
+
+Shapes outside the trained range clamp, and the notice names the thickness and camber that were
+asked for, so the discrepancy is visible. The explorer's design space runs to 24 % thickness and
+9 % camber against this dataset's 20 % and less, so that path gets exercised.
+
+No contract version bump: `URL-STATE.md` says readers ignore unknown keys, so adding an optional
+one is backwards compatible by construction.
+
+**Commit.** see `git log`

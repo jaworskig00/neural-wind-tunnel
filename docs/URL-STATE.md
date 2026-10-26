@@ -22,18 +22,40 @@ written with at most four decimals. Lists are comma-separated with no spaces.
 The preset names below are the whole set; `src/geometry/presets.ts` is the canonical list, and a
 reader should treat any name it does not recognise as a malformed value rather than assume one.
 
-| Key     | Required       | Type     | Default     | Meaning                                                                                                                                                                                  |
-| ------- | -------------- | -------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `v`     | yes            | int      | —           | Contract version. A reader that does not recognise the value loads defaults and shows a notice.                                                                                          |
-| `au`    | yes unless `p` | 6 floats | —           | Upper-surface CST weights, `cst_u_0` first.                                                                                                                                              |
-| `al`    | yes unless `p` | 6 floats | —           | Lower-surface CST weights, `cst_l_0` first.                                                                                                                                              |
-| `p`     | no             | string   | —           | Preset name instead of explicit weights: `naca0008`, `naca0012`, `naca2412` or `naca4412`. Ignored if `au` and `al` are present. An unknown name falls back to `naca2412` with a notice. |
-| `a`     | no             | float    | `2.0`       | Angle of attack in degrees, clamped to the trained range.                                                                                                                                |
-| `view`  | no             | enum     | `particles` | `particles`, `streamlines`, `both` or `surface`.                                                                                                                                         |
-| `cam`   | no             | 3 floats | `45,18,3.2` | Camera azimuth and elevation in degrees, then distance in chords.                                                                                                                        |
-| `cmap`  | no             | enum     | `coolwarm`  | Surface colormap: `coolwarm` or `cividis`, the latter colour-blind safe.                                                                                                                 |
-| `tier`  | no             | enum     | auto        | Particle count override: `low`, `mid` or `high`. Absent means the FPS probe decides.                                                                                                     |
-| `chart` | no             | enum     | `cp`        | Which chart is open: `cp`, `polar` or `none`.                                                                                                                                            |
+| Key     | Required       | Type     | Default     | Meaning                                                                                                                                                                                                        |
+| ------- | -------------- | -------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `v`     | yes            | int      | —           | Contract version. A reader that does not recognise the value loads defaults and shows a notice.                                                                                                                |
+| `au`    | yes unless `p` | 6 floats | —           | Upper-surface CST weights, `cst_u_0` first.                                                                                                                                                                    |
+| `al`    | yes unless `p` | 6 floats | —           | Lower-surface CST weights, `cst_l_0` first.                                                                                                                                                                    |
+| `p`     | no             | string   | —           | Preset name instead of explicit weights: `naca0008`, `naca0012`, `naca2412` or `naca4412`. Ignored if `au` and `al` are present. An unknown name falls back to `naca2412` with a notice.                       |
+| `naca`  | no             | 3 floats | —           | A section as camber, camber position and thickness, each a fraction of chord: `0.04,0.4,0.12` is NACA 4412. Fitted to CST weights on arrival. Ignored if `au` and `al` are present; takes precedence over `p`. |
+| `a`     | no             | float    | `2.0`       | Angle of attack in degrees, clamped to the trained range.                                                                                                                                                      |
+| `view`  | no             | enum     | `particles` | `particles`, `streamlines`, `both` or `surface`.                                                                                                                                                               |
+| `cam`   | no             | 3 floats | `45,18,3.2` | Camera azimuth and elevation in degrees, then distance in chords.                                                                                                                                              |
+| `cmap`  | no             | enum     | `coolwarm`  | Surface colormap: `coolwarm` or `cividis`, the latter colour-blind safe.                                                                                                                                       |
+| `tier`  | no             | enum     | auto        | Particle count override: `low`, `mid` or `high`. Absent means the FPS probe decides.                                                                                                                           |
+| `chart` | no             | enum     | `cp`        | Which chart is open: `cp`, `polar` or `none`.                                                                                                                                                                  |
+
+## Naming a section by camber and thickness
+
+`naca` exists so that a design chosen somewhere that thinks in camber and thickness can be opened
+here without that somewhere knowing anything about Bernstein coefficients. The three numbers are
+fractions of chord, and nothing requires them to sit on the integer NACA grid -- a sampled design
+space mostly will not. The app generates the section from the standard four-digit polynomials and
+fits CST weights to it by least squares, which is the same code path
+`tools/solver/geometry.py` uses and is held to it by `src/geometry/naca.test.ts`.
+
+**It carries a shape, and only a shape.** Two things deliberately do not travel with it:
+
+- **Reynolds number.** This dataset is one million and nothing else. A design sampled at another
+  Reynolds number opens here as a different case, and the app says so in a notice rather than
+  letting the reader assume otherwise.
+- **Anybody else's coefficients.** The lift and drag shown here come from this project's surrogate,
+  trained on this project's solver. They will not match the numbers another tool showed for the
+  same shape, and a link should not imply they would.
+
+Shapes outside the range the surrogate was trained on are clamped, and the notice names the
+thickness and camber that were asked for, so the discrepancy is visible rather than silent.
 
 ## Reader rules
 
@@ -58,6 +80,13 @@ A preset with the polar chart open:
 
 ```
 #v=1&p=naca0012&a=0&chart=polar
+```
+
+A section named by camber, camber position and thickness, as a design-space explorer would build
+it -- here, an off-grid section at four degrees:
+
+```
+#v=1&naca=0.013,0.33,0.071&a=4&view=both
 ```
 
 Minimal deep link the explorer can build from a dataset row — take the twelve `cst_*` columns

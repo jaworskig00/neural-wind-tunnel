@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { CST_ORDER } from '../geometry/cst'
+import { CST_ORDER, sectionMetrics } from '../geometry/cst'
 import { presetById } from '../geometry/presets'
 import { DEFAULT_CAMERA, URL_STATE_VERSION, decode, encode } from './urlState'
 
@@ -153,6 +153,51 @@ describe('decode', () => {
     expect(notices).toEqual([])
     expect(state.alphaDeg).toBe(5)
     expect(state.section.upper[0]).toBeCloseTo(0.194, 4)
+    expect(state.presetId).toBeNull()
+  })
+})
+
+/**
+ * The `naca` key, which is how a design arrives from somewhere that thinks in camber and
+ * thickness rather than in Bernstein coefficients.
+ */
+describe('a section given as camber, position and thickness', () => {
+  it('fits the weights and drops the preset', () => {
+    const { state, notices } = decode('#v=1&naca=0.04,0.4,0.12&a=5')
+    const metrics = sectionMetrics(state.section.upper, state.section.lower)
+
+    expect(metrics.thicknessMax).toBeCloseTo(0.12, 2)
+    expect(metrics.camberMax).toBeCloseTo(0.04, 2)
+    expect(state.presetId).toBeNull()
+    expect(state.alphaDeg).toBe(5)
+    // The link carries a shape, not an operating point, so it has to say what it did not carry.
+    expect(notices.join(' ')).toContain('Reynolds')
+  })
+
+  it('clamps a section outside the trained range and says which one', () => {
+    const { notices } = decode('#v=1&naca=0.09,0.6,0.24')
+    expect(notices.join(' ')).toMatch(/24\.0 % thickness/)
+    expect(notices.join(' ')).toContain('clamped')
+  })
+
+  it('refuses a malformed triple rather than guessing', () => {
+    const { state, notices } = decode('#v=1&naca=0.04,0.4')
+    expect(state.presetId).toBe('naca2412')
+    expect(notices.join(' ')).toContain('three fractions of chord')
+  })
+
+  it('yields to explicit weights, which are more precise', () => {
+    const upper = [0.17, 0.22, 0.19, 0.21, 0.18, 0.14]
+    const lower = [-0.14, -0.11, -0.06, 0.02, 0.05, 0.03]
+    const hash = `#v=1&au=${upper.join(',')}&al=${lower.join(',')}&naca=0.09,0.6,0.24`
+    const { state } = decode(hash)
+    expect(state.section.upper[0]).toBeCloseTo(0.17, 6)
+  })
+
+  it('takes precedence over a preset name', () => {
+    const { state } = decode('#v=1&p=naca0008&naca=0.04,0.4,0.12')
+    const metrics = sectionMetrics(state.section.upper, state.section.lower)
+    expect(metrics.camberMax).toBeCloseTo(0.04, 2)
     expect(state.presetId).toBeNull()
   })
 })

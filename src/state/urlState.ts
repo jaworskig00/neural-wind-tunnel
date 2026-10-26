@@ -12,6 +12,7 @@
  */
 
 import { CST_ORDER } from '../geometry/cst'
+import { nacaSection } from '../geometry/naca'
 import { presetById } from '../geometry/presets'
 import {
   type Section,
@@ -133,6 +134,51 @@ export function decode(hash: string): DecodeResult {
     presetId = null
   } else if (parameters.has('au') || parameters.has('al')) {
     notices.push('The shape weights in this link could not be read; showing NACA 2412.')
+  } else if (parameters.has('naca')) {
+    /**
+     * A section named the way the rest of the world names one.
+     *
+     * Camber, camber position and thickness as fractions of chord, which this app then fits CST
+     * weights to. It exists so a design chosen somewhere that thinks in those three numbers can be
+     * opened here without that somewhere having to know anything about Bernstein coefficients --
+     * the sister project's design space is exactly such a place. Nothing requires the three to sit
+     * on the integer NACA grid, and a sampled design space mostly will not.
+     *
+     * What it carries is a shape, and only a shape. The incidence rides along in `a` if the link
+     * sets it, and the Reynolds number does not: this dataset is one million and nothing else, so a
+     * design sampled at another Reynolds number opens here as a different case, and the banner
+     * below is where that gets said rather than glossed over.
+     */
+    const requested = parseFloats(parameters.get('naca'), 3)
+    if (!requested) {
+      notices.push(
+        'The section in this link could not be read; it needs camber, camber position and ' +
+          'thickness as three fractions of chord. Showing NACA 2412.',
+      )
+    } else {
+      const [camber, camberPosition, thickness] = requested as [number, number, number]
+      try {
+        const fitted = nacaSection({ camber, camberPosition, thickness })
+        const clamped = clampToTrainedRange(fitted, TRAINED_BOUNDS)
+        const wasClamped =
+          clamped.upper.some((value, index) => value !== fitted.upper[index]) ||
+          clamped.lower.some((value, index) => value !== fitted.lower[index])
+        if (wasClamped) {
+          notices.push(
+            `A section with ${(thickness * 100).toFixed(1)} % thickness and ` +
+              `${(camber * 100).toFixed(1)} % camber is outside the range this surrogate was ` +
+              'trained on, so it has been clamped to the nearest shape inside it.',
+          )
+        }
+        notices.push(
+          'Reynolds number here is fixed at 1×10⁶, whatever it was where this link came from.',
+        )
+        section = clamped
+        presetId = null
+      } catch {
+        notices.push('That section could not be fitted; showing NACA 2412.')
+      }
+    }
   } else {
     const preset = parameters.get('p')
     if (preset !== null) {

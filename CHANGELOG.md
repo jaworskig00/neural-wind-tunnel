@@ -4,6 +4,23 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- A `naca` key in the URL state: a section given as camber, camber position and thickness, each a
+  fraction of chord, fitted to CST weights on arrival. It exists so a design chosen somewhere that
+  thinks in those three numbers -- a sampled design space, for one -- can be opened here without
+  that somewhere knowing anything about Bernstein coefficients. Nothing requires the three to sit
+  on the integer NACA grid. Adding an optional key does not bump the contract version, because
+  readers ignore keys they do not know.
+- `src/geometry/naca.ts`: the four-digit polynomials and a least-squares CST fit, ported from
+  `tools/solver/geometry.py` and held to it by a committed fixture, including two designs that are
+  deliberately off the integer grid.
+- The link carries a shape and says what it does not carry: Reynolds number here is fixed at one
+  million, and a notice says so rather than letting a reader assume the operating point travelled
+  with the design.
+
 ## [1.1.0] - 2026-10-26
 
 Deployment, and the fixes that deployment exposed. Everything below was found after `v1.0.0` was
